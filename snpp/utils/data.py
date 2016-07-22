@@ -12,5 +12,3 @@ def load_csv_network(path):
         for i, r in df.iterrows()
     )
     return g
-
-
