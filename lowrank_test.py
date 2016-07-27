@@ -1,6 +1,11 @@
+import matplotlib
+matplotlib.style.use('ggplot')
+
 import random
 import numpy as np
 import pandas as pd
+import matplotlib.pyplot as plt
+
 from itertools import combinations, repeat
 from copy import copy
 
@@ -85,30 +90,48 @@ def do_one_run(group_size,
     # print(pred_y)
     arc = adjusted_rand_score(true_y, pred_y)
     # print('adjusted_rand_score: {}'.format(arc))
-    return acc, arc
+
+    # partition-based sign prediction
+    pred_sign_mat = np.diag(np.ones(N))
+    for i, j in combinations(list(range(N)), 2):
+        if pred_y[i] == pred_y[j]:
+            v = 1
+        else:
+            v = -1
+        pred_sign_mat[i, j] = pred_sign_mat[j, i] = v
+    p_acc = np.count_nonzero(true_Q == pred_sign_mat) / (N * N)
+    return acc, arc, p_acc
 
 
 def do_n_times(run_times,
                parameters,  # dict
                variable_name,
                domain):  # list
-    columns = ['run_id', 'accuracy', 'adjusted_rand_score',
+    columns = ['run_id',
+               'accuracy(lowrank)', 'accuracy(partition)',
+               'adjusted_rand_score',
                'group_size', 'group_number', 'foe_number_per_pair']
     result = []
     for i in range(run_times):
         print('run {}'.format(i))
         for j in domain:
             parameters[variable_name] = j
-            acc, arc = do_one_run(**parameters)
+            acc, arc, p_acc = do_one_run(**parameters)
             row = copy(parameters)
             row.update({'run_id': i,
-                        'accuracy': acc,
+                        'accuracy(lowrank)': acc,
+                        'accuracy(partition)': p_acc,
                         'adjusted_rand_score': arc})
             result.append(row)
             
     df = pd.DataFrame(result, columns=columns)
-    print(
-        df.groupby(variable_name)[['accuracy', 'adjusted_rand_score']].mean())
+    stat = df.groupby(variable_name)[['accuracy(lowrank)',
+                                      'accuracy(partition)',
+                                      'adjusted_rand_score']].mean()
+    print(stat)
+    ax = stat.plot()
+    fig = ax.get_figure()
+    fig.savefig('figures/lowrank_test/{}.png'.format(variable_name))
     print('\n')
     
 
