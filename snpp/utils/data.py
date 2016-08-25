@@ -95,6 +95,11 @@ def example_for_intuition(group_size, group_number, known_edge_percentage):
     return Q, true_Q
 
 
+def make_lowrank_matrix(g_size, rank):
+    _, M = example_for_intuition(g_size, rank, 0.0)
+    return M
+
+
 def main():
     dataset = 'epinions'
     path = 'data/soc-sign-{}.txt'.format(dataset)
