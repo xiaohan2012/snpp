@@ -6,12 +6,14 @@ from numpy.testing import assert_almost_equal
 
 
 from data import Q1, make_signed_matrix
-from snpp.cores.zheng2015 import build_aux_matrices, build_L_sns
+from snpp.cores.util import build_laplacian_related_matrices
+from snpp.cores.zheng2015 import build_L_sns as build_zheng2015
+from snpp.cores.kunegis2010 import build_L as build_kunegis2010
 
 
-def test_build_aux_matrices(Q1):
+def test_build_laplacian_related_matrices(Q1):
     N = 4
-    W_p, W_n, D_p, D_n, D_hat = build_aux_matrices(Q1)
+    W_p, W_n, D_p, D_n, D_hat = build_laplacian_related_matrices(Q1)
     assert_almost_equal(
         make_signed_matrix(N, [(1, 2), (3, 4)], []),
         W_p)
@@ -33,6 +35,12 @@ def test_build_aux_matrices(Q1):
         D_hat
     )
 
-def test_build_L_sns(Q1):
-    L = build_L_sns(Q1)
+
+def test_build_zheng2015(Q1):
+    L = build_zheng2015(Q1)
+    assert L.shape == (4, 4)
+
+
+def test_build_kunegis2010(Q1):
+    L = build_kunegis2010(Q1)
     assert L.shape == (4, 4)

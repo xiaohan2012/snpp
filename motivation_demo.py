@@ -13,7 +13,8 @@ from snpp.cores.lowrank import alq
 from snpp.cores.spectral import predict_cluster_labels
 from snpp.utils.data import example_for_intuition
 from snpp.cores.baselines import predict_signs_via_partition
-from snpp.cores.zheng2015 import build_L_sns
+from snpp.cores.zheng2015 import build_L_sns as build_zheng2015
+from snpp.cores.kunegis2010 import build_L as build_kunegis2010
 
 
 random.seed(12345)
@@ -22,16 +23,17 @@ np.random.seed(12345)
 
 def do_one_run(group_size,
                group_number,
-               foe_number_per_pair):
+               known_edge_percentage):
     Q, true_Q = example_for_intuition(group_size,
                                       group_number,
-                                      foe_number_per_pair)
+                                      known_edge_percentage)
     N = group_size * group_number
     
     k = group_number
     lambda_ = 0.2
     max_iter = 20
 
+    # low-rank (matrix completion) method
     X, Y, errors = alq(Q, k, lambda_, max_iter,
                        init_method='svd',
                        verbose=False)
@@ -40,6 +42,7 @@ def do_one_run(group_size,
     # print('true_Q: \n{}'.format(true_Q))
     # print('pred_Q: \n{}'.format(pred_Q))
 
+    # accuracy of completed matrix
     lr_acc = np.count_nonzero(true_Q == pred_Q) / (N * N)
     Q_p = np.dot(X, Y)
     masked_pred_Q = np.array(np.sign(Q_p) == 1,
@@ -50,6 +53,10 @@ def do_one_run(group_size,
         true_cluster_labels = [j for i in range(group_number)
                                for j in repeat(i, group_size)]
 
+        # print('true_cluster_labels:')
+        # print(true_cluster_labels)
+        # print('pred_cluster_labels:')
+        # print(pred_cluster_labels)
         arc = adjusted_rand_score(true_cluster_labels, pred_cluster_labels)
 
         # partition-based sign prediction
@@ -57,18 +64,29 @@ def do_one_run(group_size,
         p_acc = np.count_nonzero(true_Q == pred_sign_mat) / (N * N)
         return arc, p_acc
 
-    # using approximated sign matrix
+    # using approximated sign matrix of low-rank method
     lr_arc, lr_p_acc = evaluate_spectral_partition_and_prediction(Q_p)
     
-    # using signed spectral method \cite{zheng2015}
-    L = build_L_sns(Q)
-    spec_arc, spec_p_acc = evaluate_spectral_partition_and_prediction(L)
+    # using zheng2015
+    L_zheng2015 = build_zheng2015(Q)
+    zheng2015_arc, zheng2015_p_acc = evaluate_spectral_partition_and_prediction(L_zheng2015)
+
+    # using kunegis2010
+    L_kunegis2010 = build_kunegis2010(Q)
+    kunegis2010_arc, kunegis2010_p_acc = evaluate_spectral_partition_and_prediction(L_kunegis2010)
+    
     return {
+        # lowrank
         'accuracy(lowrank)': lr_acc,
+        'accuracy(lowrank + partition)': lr_p_acc,        
         'adjusted_rand_score(lowrank)': lr_arc,
-        'accuracy(partition)': lr_p_acc,
-        'accuracy(spectral)': spec_p_acc,
-        'adjusted_rand_score(spectral)': spec_arc}
+        # zheng2015
+        'accuracy(zheng2015 + partition)': zheng2015_p_acc,        
+        'adjusted_rand_score(zheng2015)': zheng2015_arc,
+        # kunegis2010
+        'accuracy(kunegis2010 + partition)': kunegis2010_p_acc,
+        'adjusted_rand_score(kunegis2010)': kunegis2010_arc
+    }
 
 
 def do_n_times(run_times,
@@ -77,9 +95,12 @@ def do_n_times(run_times,
                domain):  # list
     columns = ['run_id',
                'accuracy(lowrank)', 'adjusted_rand_score(lowrank)',
-               'accuracy(partition)',
-               'accuracy(spectral)', 'adjusted_rand_score(spectral)',
-               'group_size', 'group_number', 'foe_number_per_pair']
+               'accuracy(lowrank + partition)',
+               'accuracy(zheng2015 + partition)',
+               'adjusted_rand_score(zheng2015)',
+               'accuracy(kunegis2010 + partition)',
+               'adjusted_rand_score(kunegis2010)',
+               'group_size', 'group_number', 'known_edge_percentage']
     results = []
     for i in range(run_times):
         print('run {}'.format(i))
@@ -96,10 +117,20 @@ def do_n_times(run_times,
     eval_metrics = list(eval_result.keys())
     df = pd.DataFrame(results, columns=columns)
     stat = df.groupby(variable_name)[eval_metrics].mean()
-    print(stat)
-    ax = stat.plot()
+
+    accuracy_columns = list(filter(lambda c: c.startswith('acc'), columns))
+    arc_columns = list(filter(lambda c: c.startswith('adj'), columns))
+    
+    ax = stat[accuracy_columns].plot(style=['o'])
     fig = ax.get_figure()
-    fig.savefig('figures/lowrank_test/{}.png'.format(variable_name))
+    fig.savefig(
+        'figures/motivation/{}-accuracy.png'.format(variable_name))
+
+    ax = stat[arc_columns].plot()
+    fig = ax.get_figure()
+    fig.savefig(
+        'figures/motivation/{}-adjusted_rand_score.png'.format(variable_name))
+    
     print('\n')
     
 
@@ -108,19 +139,19 @@ def main():
     do_n_times(run_times,
                {'group_size': 4,
                 'group_number': 10},
-               'foe_number_per_pair',
-               list(range(1, 20)))
-
-    do_n_times(run_times,
-               {'group_size': 4,
-                'foe_number_per_pair': 1},
-               'group_number',
-               list(range(1, 20)))
-    do_n_times(run_times,
-               {'group_number': 4,
-                'foe_number_per_pair': 1},
-               'group_size',
-               list(range(1, 15)))
+               'known_edge_percentage',
+               np.linspace(0.1, 0.5, num=10))
+    
+    # do_n_times(run_times,
+    #            {'group_size': 4,
+    #             'known_edge_percentage': 0.5},
+    #            'group_number',
+    #            list(range(1, 20)))
+    # do_n_times(run_times,
+    #            {'group_number': 4,
+    #             'known_edge_percentage': 0.5},
+    #            'group_size',
+    #            list(range(1, 15)))
 
 
 # if __name__ == '__main__':
