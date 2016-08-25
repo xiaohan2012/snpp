@@ -13,7 +13,8 @@ from snpp.cores.lowrank import alq
 from snpp.cores.spectral import predict_cluster_labels
 from snpp.utils.data import example_for_intuition
 from snpp.cores.baselines import predict_signs_via_partition
-from snpp.cores.zheng2015 import build_L_sns as build_zheng2015
+from snpp.cores.zheng2015 import build_L_sns as build_zheng2015_sns, \
+    build_L_bns as build_zheng2015_bns
 from snpp.cores.kunegis2010 import build_L as build_kunegis2010
 
 
@@ -48,8 +49,9 @@ def do_one_run(group_size,
     masked_pred_Q = np.array(np.sign(Q_p) == 1,
                              dtype=np.int)
 
-    def evaluate_spectral_partition_and_prediction(input_matrix):
-        _, pred_cluster_labels = predict_cluster_labels(input_matrix, k)
+    def evaluate(input_matrix, eigen_order):
+        _, pred_cluster_labels = predict_cluster_labels(
+            input_matrix, k, eigen_order)
         true_cluster_labels = [j for i in range(group_number)
                                for j in repeat(i, group_size)]
 
@@ -65,24 +67,31 @@ def do_one_run(group_size,
         return arc, p_acc
 
     # using approximated sign matrix of low-rank method
-    lr_arc, lr_p_acc = evaluate_spectral_partition_and_prediction(Q_p)
+    lr_arc, lr_p_acc = evaluate(Q_p, 'desc')
     
-    # using zheng2015
-    L_zheng2015 = build_zheng2015(Q)
-    zheng2015_arc, zheng2015_p_acc = evaluate_spectral_partition_and_prediction(L_zheng2015)
+    # using zheng2015_sns
+    L_zheng2015_sns = build_zheng2015_sns(Q)
+    zheng2015_sns_arc, zheng2015_sns_p_acc = evaluate(L_zheng2015_sns, 'asc')
+    
+    # using zheng2015_bns
+    L_zheng2015_bns = build_zheng2015_bns(Q)
+    zheng2015_bns_arc, zheng2015_bns_p_acc = evaluate(L_zheng2015_bns, 'asc')
 
     # using kunegis2010
     L_kunegis2010 = build_kunegis2010(Q)
-    kunegis2010_arc, kunegis2010_p_acc = evaluate_spectral_partition_and_prediction(L_kunegis2010)
+    kunegis2010_arc, kunegis2010_p_acc = evaluate(L_kunegis2010, 'asc')
     
     return {
         # lowrank
         'accuracy(lowrank)': lr_acc,
-        'accuracy(lowrank + partition)': lr_p_acc,        
+        'accuracy(lowrank + partition)': lr_p_acc,
         'adjusted_rand_score(lowrank)': lr_arc,
-        # zheng2015
-        'accuracy(zheng2015 + partition)': zheng2015_p_acc,        
-        'adjusted_rand_score(zheng2015)': zheng2015_arc,
+        # zheng2015_sns
+        'accuracy(zheng2015_sns + partition)': zheng2015_sns_p_acc,
+        'adjusted_rand_score(zheng2015_sns)': zheng2015_sns_arc,
+        # zheng2015_bns
+        'accuracy(zheng2015_bns + partition)': zheng2015_bns_p_acc,
+        'adjusted_rand_score(zheng2015_bns)': zheng2015_bns_arc,
         # kunegis2010
         'accuracy(kunegis2010 + partition)': kunegis2010_p_acc,
         'adjusted_rand_score(kunegis2010)': kunegis2010_arc
@@ -96,8 +105,10 @@ def do_n_times(run_times,
     columns = ['run_id',
                'accuracy(lowrank)', 'adjusted_rand_score(lowrank)',
                'accuracy(lowrank + partition)',
-               'accuracy(zheng2015 + partition)',
-               'adjusted_rand_score(zheng2015)',
+               'accuracy(zheng2015_sns + partition)',
+               'adjusted_rand_score(zheng2015_sns)',
+               'accuracy(zheng2015_bns + partition)',
+               'adjusted_rand_score(zheng2015_bns)',
                'accuracy(kunegis2010 + partition)',
                'adjusted_rand_score(kunegis2010)',
                'group_size', 'group_number', 'known_edge_percentage']
@@ -140,7 +151,7 @@ def main():
                {'group_size': 4,
                 'group_number': 10},
                'known_edge_percentage',
-               np.linspace(0.1, 0.5, num=10))
+               np.linspace(0.1, 0.96, num=10))
     
     # do_n_times(run_times,
     #            {'group_size': 4,
