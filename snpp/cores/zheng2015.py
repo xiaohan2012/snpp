@@ -3,7 +3,7 @@
 
 
 import numpy as np
-from .util import build_laplacian_related_matrices
+from .spectral import build_laplacian_related_matrices
 
 
 def build_L_sns(W):

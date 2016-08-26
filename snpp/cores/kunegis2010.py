@@ -2,7 +2,7 @@
 # Kunegis, Spectral Analysis of Signed Graphs for Clustering, Prediction and Visualization, 2010
 
 
-from .util import build_laplacian_related_matrices
+from .spectral import build_laplacian_related_matrices
 
 
 def build_L(W):

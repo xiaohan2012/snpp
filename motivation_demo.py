@@ -10,7 +10,7 @@ from copy import copy
 from sklearn.metrics.cluster import adjusted_rand_score
 
 from snpp.cores.lowrank import alq
-from snpp.cores.spectral import predict_cluster_labels
+from snpp.utils.spectral import predict_cluster_labels
 from snpp.utils.data import example_for_intuition
 from snpp.cores.baselines import predict_signs_via_partition
 from snpp.cores.zheng2015 import build_L_sns as build_zheng2015_sns, \

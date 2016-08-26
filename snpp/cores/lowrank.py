@@ -1,8 +1,9 @@
 import scipy
+import numpy as np
 from scipy import sparse
 from scipy.sparse import linalg
 from scipy.sparse import csr_matrix
-import numpy as np
+from pyspark.mllib.recommendation import ALS
 
 csr_dot = csr_matrix.dot
 
@@ -49,62 +50,25 @@ def alq(Q, k, lambda_, max_iter,
     return X, Y, weighted_errors
 
 
-def get_error_sparse(Q, X, Y, W):
-    return ((W.multiply(Q - np.dot(X, Y)))**2).sum()
-
-
-# @profile
-def alq_sparse(Q, k, lambda_, max_iter,
-               init_method='random',
-               verbose=True):
-    assert init_method in {'random', 'svd'}
-
-    if init_method == 'random':
-        X = np.random.uniform(-1, 1, (Q.shape[0], k))
-        Y = np.random.uniform(-1, 1, (k, Q.shape[1]))
-    elif init_method == 'svd':
-        X, _, Y = sparse.linalg.svds(Q, k)
-        Y = Y.T
-
-    W = sparse.csr_matrix(np.abs(Q).sign())
-
-    QT = Q.T
-    WT = sparse.csr_matrix(np.abs(QT).sign())
-
-    n_rows, n_cols = W.shape
-
-    eye_k_by_lambda = lambda_ * sparse.eye(k)
-    weighted_errors = []
-    for ii in range(max_iter):
-        for u in range(n_rows):
-            if verbose and u % 100 == 0:
-                print('inside loop: u={}'.format(u))
-            if u > 500:
-                break
-            Wu = W[u, :].toarray().flatten()
-            Wu_diag = sparse.diags(Wu, format='csr')
-            # print('type(Y) = {}', type(Y))
-            # print('type(Y.T) = {}', type(Y.T))
-            # print('type(Wu_diag) = {}', type(Wu_diag))
-            # print('type(Q[u].T) = {}', type(Q[u].T))
-            print(csr_dot(Wu_diag, Y.T))
-            X[u] = np.linalg.solve(
-                csr_dot(Y, csr_dot(Wu_diag, Y.T)) + eye_k_by_lambda,
-                Y @ Wu_diag @ Q[u].T).T
-
-        break
+def alq_spark(edges, **kwargs):
+    """
+    Args:
     
-        for i in range(n_cols):
-            if verbose and i % 100 == 0:
-                print('inside loop: i={}'.format(i))
-            Wi = WT[i, :].toarray().flatten()
-            Wi_diag = sparse.diags(Wi, format='csr')
-            Y[:, i] = linalg.spsolve(
-                X.T @ Wi_diag @ X + eye_k_by_lambda,
-                X.T @ Wi_diag @ QT[i].T)
-        error = get_error_sparse(Q, X, Y, W)
-        weighted_errors.append(error)
-        if verbose:
-            print('{}th iteration, weighted error {}'.format(ii, error))
+    - edges: RDD of (node_1, node_2, sign)
+    - kwargs: parameters for ALS.train except for ratings
+        https://spark.apache.org/docs/1.5.1/api/python/pyspark.mllib.html#pyspark.mllib.recommendation.ALS.train
 
-    return X, Y, weighted_errors
+    Return:
+
+    X: np.ndarray (n x k)
+    Y: np.ndarray (k x n)
+    """
+    model = ALS.train(edges, **kwargs)
+    X = model.userFeatures().sortByKey(ascending=True).collect()
+    Y = model.productFeatures().sortByKey(ascending=True).collect()
+
+    X = np.array(list(zip(*X))[1])
+    Y = np.transpose(np.array(list(zip(*Y))[1]))
+
+    return X, Y
+    
