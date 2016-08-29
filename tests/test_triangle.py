@@ -77,10 +77,15 @@ def A6():
 
 
 def test_first_order_triangles_count(A6):
-    C1 = np.array(['a', 'b', 'b', 'c', 'd'])
-    C2 = np.array(['a', 'b', 'c', 'c', 'd'])
+    C1 = np.array(['a', 'b', 'b', 'c', 'd', 'x'])
+    C2 = np.array(['a', 'b', 'c', 'c', 'd', 'x'])
     iters = first_order_triangles_count(A6, C1, T=[(0, 1)])
     assert set(iters) == {(0, 1, -1, 1), (0, 1, 1, 2)}
 
     iters = first_order_triangles_count(A6, C2, T=[(0, 1)])
     assert set(iters) == {(0, 1, -1, 2), (0, 1, 1, 1)}
+
+    iters = first_order_triangles_count(A6, C2,
+                                        T=[(0, 1), (2, 3), (4, 5)])
+    assert set(iters) == {(0, 1, -1, 2), (0, 1, 1, 1),
+                          (2, 3, 1, 2), (4, 5, 1, 1)}

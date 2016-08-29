@@ -44,7 +44,7 @@ def first_order_triangles_count(A, C, T):
     """
     Args:
     
-    A: sign matrix (sparse)
+    A: sign matrix (sparse,csr or lil)
     C: cluster label array
     T: target edges
 
