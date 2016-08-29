@@ -4,7 +4,7 @@ import numpy as np
 
 from contexts import spark_context
 from numpy.testing import assert_almost_equal
-from snpp.cores.lowrank import alq, alq_spark
+from snpp.cores.lowrank import alq, alq_spark, alq_weighted_spark
 from snpp.utils.matrix import indexed_entries
 
 from data import Q1, sparse_Q1, Q1_result
@@ -22,13 +22,17 @@ def test_lowrank_alq_dense(Q1, Q1_result):
 
 pytestmark = pytest.mark.usefixtures("spark_context")
 
-def test_lowrank_alq_spark(Q1, sparse_Q1, Q1_result, spark_context):
+def test_lowrank_alq_spark(sparse_Q1, Q1_result, spark_context):
     """
     Borrowed from here:
     https://github.com/kawadia/pyspark.test/blob/master/examples/wordcount_test.py
     """
-    edges = indexed_entries(sparse_Q1)
-    edges_rdd = spark_context.parallelize(edges)
-    X, Y = alq_spark(edges_rdd, rank=2, lambda_=0.1, iterations=20)
+    X, Y = alq_spark(sparse_Q1, k=2, sc=spark_context,
+                     lambda_=0.1, iterations=20)
     assert_almost_equal(np.sign(np.dot(X, Y)),
                         Q1_result)
+
+    X, Y = alq_weighted_spark(sparse_Q1, None, 2, spark_context,
+                              lambda_=0.1, iterations=20)
+    assert_almost_equal(np.sign(np.dot(X, Y)),
+                        Q1_result)    

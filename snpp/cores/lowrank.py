@@ -5,11 +5,19 @@ from scipy.sparse import linalg
 from scipy.sparse import csr_matrix
 from pyspark.mllib.recommendation import ALS
 
+from ..utils.matrix import indexed_entries
+
 csr_dot = csr_matrix.dot
 
 
 def get_error(Q, X, Y, W):
     return np.sum((W * (Q - np.dot(X, Y)))**2)
+
+
+def alq_with_weight(Q, W, k, **kwargs):
+    """W (weight matrix doesn't matter)
+    """
+    return alq(Q, k, **kwargs)
 
 
 def alq(Q, k, lambda_, max_iter,
@@ -50,11 +58,17 @@ def alq(Q, k, lambda_, max_iter,
     return X, Y, weighted_errors
 
 
-def alq_spark(edges, **kwargs):
+def alq_weighted_spark(A, W, k, sc, **kwargs):
+    return alq_spark(A, k, sc, **kwargs)
+
+
+def alq_spark(A, k, sc, **kwargs):
     """
     Args:
     
-    - edges: RDD of (node_1, node_2, sign)
+    - A: sign matrix (csr_matrix)
+    - k: number of clusters
+    - sc: the spark context
     - kwargs: parameters for ALS.train except for ratings
         https://spark.apache.org/docs/1.5.1/api/python/pyspark.mllib.html#pyspark.mllib.recommendation.ALS.train
 
@@ -63,7 +77,9 @@ def alq_spark(edges, **kwargs):
     X: np.ndarray (n x k)
     Y: np.ndarray (k x n)
     """
-    model = ALS.train(edges, **kwargs)
+    edges = indexed_entries(A)
+    edges_rdd = sc.parallelize(edges)
+    model = ALS.train(edges_rdd, rank=k, **kwargs)
     X = model.userFeatures().sortByKey(ascending=True).collect()
     Y = model.productFeatures().sortByKey(ascending=True).collect()
 
@@ -71,4 +87,3 @@ def alq_spark(edges, **kwargs):
     Y = np.transpose(np.array(list(zip(*Y))[1]))
 
     return X, Y
-    
