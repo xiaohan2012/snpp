@@ -1,3 +1,4 @@
+import numpy as np
 from collections import Counter
 
 
@@ -16,6 +17,7 @@ def in_different_partitions(nodes, C):
     return len(set(C[n] for n in nodes)) == len(nodes)
 
 
+# Deprecated
 def can_be_balanced(e, e1, e2, C):
     nodes, signs = extract_nodes_and_signs(e, e1, e2)
     if in_different_partitions(nodes, C):
@@ -26,16 +28,16 @@ def can_be_balanced(e, e1, e2, C):
 def get_sign_1st_order(e, e1, e2, C):
     nodes, signs = extract_nodes_and_signs(e, e1, e2)
     
-    if in_different_partitions(nodes, C):
-        assert can_be_balanced(e, e1, e2, C)
+    if in_different_partitions(nodes, C) and signs == [-1, -1]:
+        # weak balance
         return -1
     else:
-        neg_cnt = len(filter(lambda s: s == -1, signs))
+        # strong balance
+        neg_cnt = len(list(filter(lambda s: s == -1, signs)))
         if neg_cnt % 2 == 0:
             return 1
         else:
             return -1
-
 
 
 def first_order_triangles_count(A, C, T):
@@ -47,19 +49,23 @@ def first_order_triangles_count(A, C, T):
     T: target edges
 
     Returns:
-    result: dict of (n_i, n_j, s) -> # balanced count,
-       (n_1, n_j) \in T
+    generator of (n_i, n_j, sign, count)
+        note that (n_1, n_j) \in T
     """
-    result = Counter()
     for ni, nj in T:
-        adj_vect = A[ni, :] + A[nj, :]
+        # seems no support for bit-wise operation on scipy.sparse
+        adj_vect = np.logical_and(A[ni, :].todense(),
+                                  A[nj, :].todense())
         adj_vect[0, ni] = adj_vect[0, nj] = 0
         _, nks = adj_vect.nonzero()
+        
+        counter_by_sign = Counter()  # cleared after each main loop
         for nk in nks:
             if A[ni, nk] != 0 and A[nj, nk] != 0:  # edges not missing
                 e = (ni, nj)
                 e1 = (ni, nk, A[ni, nk])
                 e2 = (nj, nk, A[nj, nk])
-                if can_be_balanced(e, e1, e2, C):
-                    correct_sign = get_sign_1st_order(e, e1, e2, C)
-                    result[(ni, nj, correct_sign)] += 1
+                correct_sign = get_sign_1st_order(e, e1, e2, C)
+                counter_by_sign[correct_sign] += 1
+        for sign, count in counter_by_sign.items():
+            yield (ni, nj, sign, count)
