@@ -3,7 +3,7 @@ import pandas as pd
 import numpy as np
 import networkx as nx
 
-
+from scipy.sparse import dok_matrix
 from itertools import combinations, product
 
 
@@ -17,6 +17,19 @@ def load_csv_network(path):
         for i, r in df.iterrows()
     )
     return g
+
+
+def load_csv_as_sparse(path):
+    """node ids should go from 0 to N
+    """
+    df = pd.read_csv(path, sep='\t')
+    nodes = set(df['FromNodeId'].unique()).union(set(df['ToNodeId'].unique()))
+    N = max(nodes) + 1  # DOUBT
+    m = dok_matrix((N, N))
+    for i, r in df.iterrows():
+        m[r['FromNodeId'], r['ToNodeId']] = r['Sign']
+
+    return m.tocsr()
 
 
 def example_for_intuition_OLD(group_size, group_number, foe_number_per_pair):
@@ -102,14 +115,3 @@ def example_for_intuition(group_size, group_number, known_edge_percentage):
 def make_lowrank_matrix(g_size, rank):
     _, M = example_for_intuition(g_size, rank, 0.0)
     return M
-
-
-def main():
-    dataset = 'epinions'
-    path = 'data/soc-sign-{}.txt'.format(dataset)
-    g = load_csv_network(path)
-    nx.write_gpickle(g, 'data/{}.pkl'.format(dataset))
-
-
-if __name__ == '__main__':
-    main()

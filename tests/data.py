@@ -61,9 +61,6 @@ def make_signed_matrix(N, friends, enemies):
 def Q1():
     """a simple signed matrix
     """
-    random.seed(12345)
-    np.random.seed(12345)
-
     N = 4
     friends = [(1, 2), (3, 4)]
     enemies = [(1, 3)]
@@ -82,3 +79,14 @@ def Q1_result():
                     [-1.,  -1.,  1.,  1.],
                     [-1.,  -1.,  1.,  1.]])
     return exp
+
+
+@pytest.fixture
+def Q1_d():
+    """
+    directed and asymmetric
+    """
+    Q = Q1()
+    Q[0, 1] = -1
+    Q[1, 3] = 0
+    return sparse.csr_matrix(Q)
