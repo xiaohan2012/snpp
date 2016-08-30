@@ -1,6 +1,7 @@
 import random
 import pytest
 
+import networkx as nx
 import numpy as np
 from scipy import sparse
 
@@ -89,4 +90,11 @@ def Q1_d():
     Q = Q1()
     Q[0, 1] = -1
     Q[1, 3] = 0
+    Q[0, 3] = 1
     return sparse.csr_matrix(Q)
+
+
+@pytest.fixture
+def random_graph():
+    g = nx.gnp_random_graph(10, 0.5, seed=12345, directed=True)
+    return nx.adjacency_matrix(g)

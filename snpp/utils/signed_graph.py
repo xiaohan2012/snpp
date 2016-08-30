@@ -1,11 +1,29 @@
-from scipy.sparse import issparse
+from scipy.sparse import issparse, csr_matrix
+from snpp.utils.matrix import indexed_entries
+
 
 def make_symmetric(m):
-    pass
+    """for entries whose diagonal counterparts are missing,
+    replicate the values
+
+    Return csr_matrix
+    """
+    entries_to_add = []
+    for i, j in zip(*m.nonzero()):
+        if m[j, i] == 0:
+            entries_to_add.append((j, i, m[i, j]))
+    idx1, idx2, data = zip(*(indexed_entries(m) + entries_to_add))
+    return csr_matrix((data, (idx1, idx2)), shape=m.shape)
 
 
 def fill_diagonal(m, val=1):
-    pass
+    assert issparse(m)
+    assert m.shape[0] == m.shape[1]
+    m_new = m.todok()
+
+    for i in range(m_new.shape[0]):
+        m_new[i, i] = val
+    return m_new
 
 
 def symmetric_stat(m):

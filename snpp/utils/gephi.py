@@ -1,19 +1,20 @@
 import networkx as nx
-from data import load_csv_network
+from matrix import load_sparse_csr, indexed_entries
 
 
-def positive_subgraph(g):
-    return nx.Graph((s, t) for s, t in g.edges_iter() if g[s][t]['sign'] == 1)
+dataset = 'epinions'
 
 
 def main():
-    input_path = 'data/soc-sign-epinions.txt'
-    output_path = 'output/epinions-positive.gml'
-    g = load_csv_network(input_path)
-    g = positive_subgraph(g)
-
+    input_path = 'data/{}.npz'.format(dataset)
+    output_path = 'output/{}-positive.gml'.format(dataset)
+    m = load_sparse_csr(input_path)
+    
+    g = nx.DiGraph()
+    g.add_edges_from((i, j)
+                     for i, j, s in indexed_entries(m)
+                     if s == 1)
     nx.write_gml(g, output_path, stringizer=str)
-
     
 if __name__ == '__main__':
     main()

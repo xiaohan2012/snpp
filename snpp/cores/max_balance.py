@@ -32,7 +32,9 @@ def greedy(A, W, C, B, T):
             n1, n2, s, c = max(first_order_triangles_count(A, C, targets),
                                key=lambda tpl: tpl[-1])
         except ValueError:  # no first-order triangles
-            print("WARN: empty first-order triangles")
+            print("WARN: empty first-order triangles. So exit loop")
+            print('targets:')
+            print(targets)
             break
         
         print('assigning {} to ({}, {}) produces {} more balanced triangles'.format(
