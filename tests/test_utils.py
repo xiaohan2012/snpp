@@ -1,8 +1,17 @@
 import contexts as ctx
 
 import numpy as np
-from snpp.utils import nonzero_edges, predict_signs_using_partition
+from scipy.sparse import isspmatrix_dok
+from snpp.utils import nonzero_edges, \
+    predict_signs_using_partition
 from snpp.utils.data import make_lowrank_matrix
+from snpp.utils.matrix import zero
+
+
+def test_zeros():
+    xs, ys = zero(np.eye(2))
+    assert xs.tolist() == [0, 1]
+    assert ys.tolist() == [1, 0]
 
 
 def test_nonzero_edges():
@@ -12,18 +21,24 @@ def test_nonzero_edges():
 
 
 def test_predict_signs_using_partition():
-    c = 2  # cluster count
-    s = 2  # cluster size
-    C = np.random.permutation([i for j in range(s) for i in range(c)])
-    
+    rank = 2  # cluster count
+    size = 2  # cluster size
+    C = [i for i in range(rank) for j in range(size)]
+
+    # without targets
     P = predict_signs_using_partition(C, targets=None)
-    true_P = make_lowrank_matrix(s, rank=c)
-    np.testing.assert_almost_equal(P, true_P)
-    
+    assert isspmatrix_dok(P)
+
+    true_P = make_lowrank_matrix(size, rank=rank) - np.eye(size * rank)
+    np.testing.assert_almost_equal(P.toarray(), true_P)
+
+    # with targets
     P = predict_signs_using_partition(C, targets=[(0, 2), (2, 0)])
-    true_P = np.array([[1, 0, -1, 0],
-                       [0, 1, 0, 0],
-                       [-1, 0, 1, 0],
-                       [0, 0, 0, 1]])
+    assert isspmatrix_dok(P)
     
-    np.testing.assert_almost_equal(P, true_P)
+    true_P = np.array([[0, 0, -1, 0],
+                       [0, 0, 0, 0],
+                       [-1, 0, 0, 0],
+                       [0, 0, 0, 0]])
+    
+    np.testing.assert_almost_equal(P.toarray(), true_P)

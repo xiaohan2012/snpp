@@ -61,7 +61,7 @@ def example_for_intuition_OLD(group_size, group_number, foe_number_per_pair):
 
 
 def example_for_intuition(group_size, group_number, known_edge_percentage):
-    assert known_edge_percentage < 1
+    assert known_edge_percentage <= 1
     N = group_size * group_number
     mat_size = N * N
     Q = np.zeros((N, N))
@@ -83,7 +83,11 @@ def example_for_intuition(group_size, group_number, known_edge_percentage):
     n_known = int(mat_size * known_edge_percentage / 2)
 
     all_edges = list(combinations(range(N), 2))
-    sel_idx = np.random.choice(len(all_edges), size=n_known, replace=False)
+
+    try:
+        sel_idx = np.random.choice(len(all_edges), size=n_known, replace=False)
+    except ValueError:  # ValueError: Cannot take a larger sample than population when 'replace=False'
+        sel_idx = np.random.choice(len(all_edges), size=len(all_edges), replace=False)
 
     for idx in sel_idx:
         i, j = all_edges[idx]

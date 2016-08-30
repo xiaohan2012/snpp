@@ -1,4 +1,5 @@
 import numpy as np
+from scipy.sparse import isspmatrix_csr
 from collections import Counter
 
 
@@ -52,6 +53,8 @@ def first_order_triangles_count(A, C, T):
     generator of (n_i, n_j, sign, count)
         note that (n_1, n_j) \in T
     """
+    assert isspmatrix_csr(A)
+
     for ni, nj in T:
         # seems no support for bit-wise operation on scipy.sparse
         adj_vect = np.logical_and(A[ni, :].todense(),

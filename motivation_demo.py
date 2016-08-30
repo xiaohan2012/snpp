@@ -10,7 +10,7 @@ from copy import copy
 from sklearn.metrics.cluster import adjusted_rand_score
 
 from snpp.cores.lowrank import alq
-from snpp.utils.spectral import predict_cluster_labels
+from snpp.cores.spectral import predict_cluster_labels
 from snpp.utils.data import example_for_intuition
 from snpp.cores.baselines import predict_signs_via_partition
 from snpp.cores.zheng2015 import build_L_sns as build_zheng2015_sns, \
@@ -39,7 +39,7 @@ def do_one_run(group_size,
                        init_method='svd',
                        verbose=False)
 
-    pred_Q = np.sign(np.dot(X, Y))
+    pred_Q = np.sign(np.dot(X, Y))n
     # print('true_Q: \n{}'.format(true_Q))
     # print('pred_Q: \n{}'.format(pred_Q))
 

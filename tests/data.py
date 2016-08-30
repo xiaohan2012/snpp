@@ -2,8 +2,47 @@ import random
 import pytest
 
 import numpy as np
-
 from scipy import sparse
+
+from snpp.utils.data import example_for_intuition
+
+
+def module_attr(request, name, default):
+    return getattr(request.module, name, default)
+
+
+@pytest.fixture
+def rand_lowrank_mat(request):
+    N = module_attr(request, 'N', 12)
+    rank = module_attr(request, 'rank', 3)
+    known_edge_percentage = module_attr(request, 'known_edge_percentage', 0.4)
+    random_seed = module_attr(request, 'random_seed', 123456)
+
+    random.seed(random_seed)
+    np.random.seed(random_seed)
+
+    M, _ = example_for_intuition(
+        group_size=int(N / rank),
+        group_number=rank,
+        known_edge_percentage=known_edge_percentage)
+    return M
+
+
+@pytest.fixture
+def true_lowrank_mat(request):
+    N = module_attr(request, 'N', 12)
+    rank = module_attr(request, 'rank', 3)
+    known_edge_percentage = module_attr(request, 'known_edge_percentage', 0.4)
+    random_seed = module_attr(request, 'random_seed', 123456)
+
+    random.seed(random_seed)
+    np.random.seed(random_seed)
+
+    _, M = example_for_intuition(
+        group_size=int(N / rank),
+        group_number=rank,
+        known_edge_percentage=known_edge_percentage)
+    return M
 
 
 def make_signed_matrix(N, friends, enemies):

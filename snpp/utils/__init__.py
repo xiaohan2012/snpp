@@ -1,4 +1,5 @@
 import numpy as np
+from scipy.sparse import dok_matrix
 from itertools import permutations
 
 
@@ -16,11 +17,11 @@ def predict_signs_using_partition(C, targets=None):
     
     Returns:
 
-    Sign matrix on targets
+    Sign matrix on targets (dok_matrix)
     """
 
     n = len(C)
-    P = np.zeros((n, n))
+    P = dok_matrix((n, n))
     idx = list(range(len(C)))
 
     if targets is None:
@@ -32,9 +33,6 @@ def predict_signs_using_partition(C, targets=None):
             P[i, j] = 1
         else:
             P[i, j] = -1
-
-    for i in idx:
-        P[i, i] = 1
     return P
 
 

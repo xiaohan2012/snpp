@@ -28,8 +28,12 @@ def greedy(A, W, C, B, T):
     T_p = set()
     while (edge_weight_sum(T_p, W) < B
            and len(targets) > 0):
-        n1, n2, s, c = max(first_order_triangles_count(A, C, targets),
-                           key=lambda tpl: tpl[-1])
+        try:
+            n1, n2, s, c = max(first_order_triangles_count(A, C, targets),
+                               key=lambda tpl: tpl[-1])
+        except ValueError:  # no first-order triangles
+            print("WARN: empty first-order triangles")
+            break
         
         print('assigning {} to ({}, {}) produces {} more balanced triangles'.format(
             s, n1, n2, c

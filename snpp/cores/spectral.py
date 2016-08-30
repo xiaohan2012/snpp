@@ -36,7 +36,7 @@ def predict_cluster_labels(L, k, order):
     assert order in {'asc', 'desc'}
     
     w, v = np.linalg.eig(L)
-    # decreasing order, WRONG?
+    
     if order == 'desc':
         indx = np.argsort(w)[::-1]
     else:

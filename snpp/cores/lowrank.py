@@ -5,6 +5,7 @@ from scipy.sparse import linalg
 from scipy.sparse import csr_matrix
 from pyspark.mllib.recommendation import ALS
 
+from .spectral import predict_cluster_labels
 from ..utils.matrix import indexed_entries
 
 csr_dot = csr_matrix.dot
@@ -16,6 +17,7 @@ def get_error(Q, X, Y, W):
 
 def alq_with_weight(Q, W, k, **kwargs):
     """W (weight matrix doesn't matter)
+    wrapper to make interface consistant
     """
     return alq(Q, k, **kwargs)
 
@@ -59,6 +61,8 @@ def alq(Q, k, lambda_, max_iter,
 
 
 def alq_weighted_spark(A, W, k, sc, **kwargs):
+    """wrapper to make interface consistant
+    """
     return alq_spark(A, k, sc, **kwargs)
 
 
@@ -87,3 +91,26 @@ def alq_spark(A, k, sc, **kwargs):
     Y = np.transpose(np.array(list(zip(*Y))[1]))
 
     return X, Y
+
+
+def weighted_partition_sparse(A, W, k, sc, **kwargs):
+    """wrapper
+    """
+    return partition_sparse(A, k, sc, **kwargs)
+
+
+def partition_sparse(A, k, sc, **kwargs):
+    """
+    Args:
+
+    - A: sparse matrix
+    - sc: spark context
+
+    Return:
+
+    - cluster labels
+    """
+    X, Y = alq_spark(A, k, sc, **kwargs)
+    A_p = np.dot(X, Y)
+    _, labels = predict_cluster_labels(A_p, k, order='desc')
+    return labels
