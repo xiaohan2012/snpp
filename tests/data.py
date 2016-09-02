@@ -5,7 +5,8 @@ import networkx as nx
 import numpy as np
 from scipy import sparse
 
-from snpp.utils.data import example_for_intuition
+from snpp.utils.data import example_for_intuition, make_lowrank_matrix
+from snpp.cores.louvain import Status
 
 
 def module_attr(request, name, default):
@@ -98,3 +99,28 @@ def Q1_d():
 def random_graph():
     g = nx.gnp_random_graph(10, 0.5, seed=12345, directed=True)
     return nx.adjacency_matrix(g)
+
+
+@pytest.fixture
+def lowrank_graph(request):
+    group_size = module_attr(request, 'group_size', 10)
+    rank = module_attr(request, 'rank', 4)
+
+    m = make_lowrank_matrix(group_size, rank)
+    
+    g = nx.MultiGraph()  # allow parallel edges
+    n_row, n_col = m.shape
+    for i in range(n_row):
+        for j in range(n_col):
+            s = m[i][j]
+            g.add_edge(i, j, key=s, weight=1, sign=s)
+    return g
+
+
+@pytest.fixture
+def status_0(request):
+    g = lowrank_graph(request)
+    s = Status()
+    s.init(g)
+    return s
+
