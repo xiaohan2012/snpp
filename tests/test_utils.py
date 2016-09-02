@@ -6,8 +6,12 @@ from scipy.sparse import isspmatrix_dok
 from snpp.utils import nonzero_edges, \
     predict_signs_using_partition
 from snpp.utils.data import make_lowrank_matrix
-from snpp.utils.matrix import zero, split_train_dev_test
-from data import random_graph
+from snpp.utils.matrix import zero, \
+    split_train_dev_test, \
+    split_train_test, \
+    difference_ratio, \
+    difference_ratio_sparse
+from data import random_graph, sparse_Q1, Q1_d
 
 
 def test_zeros():
@@ -54,5 +58,19 @@ def test_split_train_dev_test(random_graph):
 
     assert_allclose(sizes / np.sum(sizes), weights, atol=0.02)
     assert_allclose(m.toarray(), (train + dev + test).toarray())
+
+
+def test_split_train_test(random_graph):
+    m = random_graph
+    weights = [0.8, 0.2]
+    train, test = split_train_test(m, weights=weights)
+    sizes = np.array([train.nnz, test.nnz])
+
+    assert_allclose(sizes / np.sum(sizes), weights, atol=0.02)
+    assert_allclose(m.toarray(), (train + test).toarray())
+
     
-    
+def test_difference_ratio_sparse(sparse_Q1):
+    sparse_Q2 = sparse_Q1.copy()
+    sparse_Q2[0, 1] = -1
+    assert_allclose(difference_ratio_sparse(sparse_Q1, sparse_Q2), 1/10)

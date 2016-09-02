@@ -23,7 +23,7 @@ def fill_diagonal(m, val=1):
 
     for i in range(m_new.shape[0]):
         m_new[i, i] = val
-    return m_new
+    return m_new.tocsr()
 
 
 def symmetric_stat(m):

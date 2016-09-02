@@ -13,6 +13,9 @@ def test_edge_weight_sum():
                         W=np.ones((3, 3)))
     assert s == 2
 
+    s = edge_weight_sum(list(range(3)), W=None)
+    assert s == 3
+
     
 def test_greedy(A6):
     W = np.ones(A6.shape)

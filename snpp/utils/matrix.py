@@ -26,6 +26,19 @@ def difference_ratio(M1, M2):
     return len(idx) / M1.size
 
 
+def difference_ratio_sparse(M1, M2):
+    """different ratio on nonzero elements
+    """
+    assert issparse(M1)
+    assert issparse(M2)
+    assert M1.shape == M2.shape
+    assert M1.nnz == M2.nnz
+
+    s1 = set(indexed_entries(M1))
+    s2 = set(indexed_entries(M2))
+    return 1 - len(s1.intersection(s2)) / M1.nnz
+
+
 def save_sparse_csr(filename, array):
     np.savez(filename,
              data=array.data,
@@ -42,6 +55,11 @@ def load_sparse_csr(filename):
                       shape=loader['shape'])
 
 
+def _make_matrix(items, shape):
+    idx1, idx2, data = zip(*items)
+    return csr_matrix((data, (idx1, idx2)), shape=shape)
+
+    
 def split_train_dev_test(m, weights=[0.8, 0.1, 0.1]):
     """
     Returns:
@@ -62,7 +80,18 @@ def split_train_dev_test(m, weights=[0.8, 0.1, 0.1]):
                                  train_size=weights[1] / remain_sum,
                                  test_size=weights[2] / remain_sum)
     
-    def make_matrix(items):
-        idx1, idx2, data = zip(*items)
-        return csr_matrix((data, (idx1, idx2)), shape=m.shape)
-    return make_matrix(train), make_matrix(dev), make_matrix(test)
+    return (_make_matrix(train, m.shape),
+            _make_matrix(dev, m.shape),
+            _make_matrix(test, m.shape))
+
+
+def split_train_test(m, weights=[0.9, 0.1]):
+    assert len(weights) == 2
+    assert abs(sum(weights) - 1.0) < 0.00001
+    assert issparse(m)
+
+    entries = indexed_entries(m)
+
+    train, test = train_test_split(entries, train_size=weights[0], test_size=weights[1])
+    return (_make_matrix(train, m.shape),
+            _make_matrix(test, m.shape))

@@ -31,7 +31,7 @@ def iterative_approach(A, W, T, k,
     C: partition, partition label array, 1xn
     P: predicted sign matrix on T (csr_matrix)
     """
-    assert A.shape == W.shape, 'shape mismatch'
+    assert W is None or A.shape == W.shape, 'not None and shape mismatch'
     n1, n2 = A.shape
     assert n1 == n2, 'dimension mismatch'
 

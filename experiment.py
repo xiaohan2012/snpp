@@ -1,21 +1,26 @@
 from pyspark.sql import SparkSession
 
-from snpp.cores.joint_part_pred import iterative_approach, \
-    naive_approach
+from snpp.cores.joint_part_pred import iterative_approach
 from snpp.cores.max_balance import greedy
 from snpp.cores.lowrank import weighted_partition_sparse
 from snpp.cores.budget_allocation import exponential_budget
-from snpp.utils.matrix import load_sparse_csr, split_train_dev_test
+from snpp.utils.matrix import load_sparse_csr, \
+    save_sparse_csr, \
+    split_train_test, \
+    difference_ratio_sparse
 from snpp.utils.signed_graph import fill_diagonal, make_symmetric
 
 dataset = 'slashdot'
 method = 'lowrank'
 lambda_ = 0.1
-k = 10
+k = 40
 max_iter = 20
 random_seed = 123456
 
 raw_mat_path = 'data/{}.npz'.format(dataset)
+
+
+recache_input = False
 
 
 if __name__ == "__main__":
@@ -24,22 +29,37 @@ if __name__ == "__main__":
         .appName("Signed Network Experiment")\
         .getOrCreate()
     spark_context = spark.sparkContext
+    spark_context.setCheckpointDir('.checkpoint')  # stackoverflow errors
 
-    m = load_sparse_csr(raw_mat_path)
+    if recache_input:
+        print('loading sparse matrix from {}'.format(raw_mat_path))
+        m = load_sparse_csr(raw_mat_path)
 
-    train_m, dev_m, test_m = split_train_dev_test(
-        m,
-        weights=[0.8, 0.1, 0.1])
+        print('splitting train and test...')
+        train_m, test_m = split_train_test(
+            m,
+            weights=[0.9, 0.1])
 
-    # some processing
-    print('making symmetric...')
-    train_m = make_symmetric(train_m)
-    print('filling diagonal...')
-    train_m = fill_diagonal(train_m)
+        print(train_m.nnz)
+        print(test_m.nnz)
+        # some processing
+        print('making symmetric...')
+        train_m = make_symmetric(train_m)
+        print('filling diagonal...')
+        train_m = fill_diagonal(train_m)
+        
+        print('saving pre-split train and test matrix...')
+        save_sparse_csr('data/slashdot/train_sym', train_m)
+        save_sparse_csr('data/slashdot/test', test_m)
+    else:
+        print('loading pre-split train and test matrix...')
+        train_m = load_sparse_csr('data/slashdot/train_sym.npz')
+        test_m = load_sparse_csr('data/slashdot/test.npz')
     
-    targets = zip(*test_m.nonzero())
+    targets = list(zip(*test_m.nonzero()))
+    print('#targets = {}'.format(len(targets)))
     A, P = iterative_approach(
-        train_m, W=None, T=targets,
+        train_m, W=None, T=targets, k=k,
         graph_partition_f=weighted_partition_sparse,
         graph_partition_kwargs=dict(sc=spark_context,
                                     lambda_=lambda_, iterations=max_iter,
@@ -48,4 +68,4 @@ if __name__ == "__main__":
         budget_allocation_kwargs=dict(exp_const=2),
         solve_maxbalance_f=greedy)
 
-    
+    error_rate = difference_ratio_sparse(test_m, P)

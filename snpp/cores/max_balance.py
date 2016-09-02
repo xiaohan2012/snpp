@@ -4,7 +4,10 @@ from copy import copy
 
 
 def edge_weight_sum(edges, W):
-    return sum(W[n1, n2] for n1, n2 in edges)
+    if W is None:
+        return len(edges)
+    else:
+        return sum(W[n1, n2] for n1, n2 in edges)
 
     
 def greedy(A, W, C, B, T):
@@ -13,6 +16,7 @@ def greedy(A, W, C, B, T):
     
     A: sign matrix (lil_matrix or csr_matrix)
     W: edge weight matrix
+       or None (means \forall (i, j), W[i, j] = 1)
     C: cluster label array
     B: budget
     T: set of target edges (node i, node j)

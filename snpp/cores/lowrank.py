@@ -84,8 +84,12 @@ def alq_spark(A, k, sc, **kwargs):
     edges = indexed_entries(A)
     edges_rdd = sc.parallelize(edges)
     model = ALS.train(edges_rdd, rank=k, **kwargs)
-    X = model.userFeatures().sortByKey(ascending=True).collect()
-    Y = model.productFeatures().sortByKey(ascending=True).collect()
+
+    u_ft = model.userFeatures()
+    p_ft = model.productFeatures()
+
+    X = u_ft.sortByKey(ascending=True).collect()
+    Y = p_ft.sortByKey(ascending=True).collect()
 
     X = np.array(list(zip(*X))[1])
     Y = np.transpose(np.array(list(zip(*Y))[1]))
@@ -111,6 +115,11 @@ def partition_sparse(A, k, sc, **kwargs):
     - cluster labels
     """
     X, Y = alq_spark(A, k, sc, **kwargs)
+    print(X.dtype)
+    
+    X = np.asarray(X, dtype=np.float16)
+    Y = np.asarray(Y, dtype=np.float16)
+    
     A_p = np.dot(X, Y)
     _, labels = predict_cluster_labels(A_p, k, order='desc')
     return labels

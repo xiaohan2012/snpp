@@ -22,6 +22,7 @@ def test_fill_diagonal():
     m = csr_matrix(np.array([[1, 0], [0, 0]]))
     assert len(set([m[i, i] for i in range(N)])) == 2
     m_new = fill_diagonal(m)
+    assert isspmatrix_csr(m_new)
     assert set([m_new[i, i] for i in range(N)]) == {1}
 
 
