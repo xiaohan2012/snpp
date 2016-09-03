@@ -4,6 +4,7 @@ from snpp.cores.joint_part_pred import iterative_approach
 from snpp.cores.max_balance import greedy
 from snpp.cores.lowrank import weighted_partition_sparse
 from snpp.cores.budget_allocation import exponential_budget
+from snpp.cores.louvain import best_partition_matrix
 from snpp.utils.matrix import load_sparse_csr, \
     save_sparse_csr, \
     split_train_test, \
@@ -60,10 +61,11 @@ if __name__ == "__main__":
     print('#targets = {}'.format(len(targets)))
     A, P = iterative_approach(
         train_m, W=None, T=targets, k=k,
-        graph_partition_f=weighted_partition_sparse,
-        graph_partition_kwargs=dict(sc=spark_context,
-                                    lambda_=lambda_, iterations=max_iter,
-                                    seed=random_seed),
+        # graph_partition_f=weighted_partition_sparse,
+        # graph_partition_kwargs=dict(sc=spark_context,
+        #                             lambda_=lambda_, iterations=max_iter,
+        #                             seed=random_seed),
+        graph_partition_f=best_partition_matrix,
         budget_allocation_f=exponential_budget,
         budget_allocation_kwargs=dict(exp_const=2),
         solve_maxbalance_f=greedy)

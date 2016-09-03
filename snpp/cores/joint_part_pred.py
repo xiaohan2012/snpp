@@ -5,6 +5,7 @@ import numpy as np
 from copy import copy
 from scipy.sparse import csr_matrix
 from snpp.utils import nonzero_edges, predict_signs_using_partition
+from snpp.utils.signed_graph import matrix2graph
 
 
 def iterative_approach(A, W, T, k,
@@ -35,7 +36,8 @@ def iterative_approach(A, W, T, k,
     n1, n2 = A.shape
     assert n1 == n2, 'dimension mismatch'
 
-    remaining_targets = copy(T)
+    remaining_targets = set(copy(T))
+    assert isinstance(remaining_targets, set)
     
     iter_n = 0
     P = csr_matrix((n1, n2))
@@ -43,16 +45,18 @@ def iterative_approach(A, W, T, k,
         iter_n += 1
         print('iteration={}, #remaining targets={}'.format(
             iter_n, len(remaining_targets)))
+        print("graph partitioning...")
         C = graph_partition_f(A + P, W, k,
                               **graph_partition_kwargs)
         B = budget_allocation_f(C, A, P, iter_n, **budget_allocation_kwargs)
+        print("solving max_balance")
         P_prime = solve_maxbalance_f(A + P, W, C, B, T=remaining_targets,
                                      **solve_maxbalance_kwargs)
         remaining_targets -= set(zip(*P_prime.nonzero()))
         P += P_prime
-    print("inside joint_part_pred:")
-    print((A + P).toarray())
-    print(k)
+    # print("inside joint_part_pred:")
+    # print((A + P).toarray())
+    # print(k)
     C = graph_partition_f(A + P, W, k,
                           **graph_partition_kwargs)
     return C, P

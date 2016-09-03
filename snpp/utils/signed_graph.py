@@ -1,3 +1,5 @@
+import networkx as nx
+from tqdm import tqdm
 from scipy.sparse import issparse, csr_matrix
 from snpp.utils.matrix import indexed_entries
 
@@ -40,3 +42,19 @@ def symmetric_stat(m):
             if m[i, j] == m[j, i]:
                 c2 += 1
     return c1, c2
+
+
+def matrix2graph(A, W):
+    """returns MultiGraph
+    """
+    print('building MultiGraph')
+    g = nx.MultiGraph()  # allow parallel edges
+    idxs = tqdm(zip(*A.nonzero()))
+    if W is None:
+        for i, j in idxs:
+            g.add_edge(i, j, key=A[i, j], weight=1, sign=A[i, j])
+    else:
+        for i, j in idxs:
+            g.add_edge(i, j, key=A[i, j], weight=W[i, j], sign=A[i, j])
+    return g
+    

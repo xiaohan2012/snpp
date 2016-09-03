@@ -1,13 +1,16 @@
 import contexts as ctx
 
 import pytest
+from scipy.sparse import csr_matrix
 import networkx as nx
 from snpp.cores.louvain import best_partition, Status, \
     __modularity, modularity, \
     __remove, __insert, __neighcom, \
     induced_graph, \
-    __one_level
+    __one_level, \
+    best_partition_matrix
 
+from snpp.utils.data import make_lowrank_matrix
 from data import lowrank_graph as g, status_0 as s0
 from itertools import repeat, chain
 
@@ -21,6 +24,15 @@ def test_detect_community(g):
     expected = list(chain(*(repeat(i, group_size) for i in range(rank))))  # 0,0..1,1..2,2..3,3..
 
     part = best_partition(g)
+    coms = [part[i] for i in range(N)]
+    
+    assert coms == expected
+
+
+def test_best_partition_matrix():
+    expected = list(chain(*(repeat(i, group_size) for i in range(rank))))  # 0,0..1,1..2,2..3,3..
+    A = csr_matrix(make_lowrank_matrix(group_size, rank))
+    part = best_partition_matrix(A, W=None, k=None)
     coms = [part[i] for i in range(N)]
     
     assert coms == expected

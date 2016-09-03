@@ -6,9 +6,16 @@ Adaptation of Louvain community detection to signed network.
 Main change: definition of modularity
 """
 
-from __future__ import print_function
+import networkx as nx
 from collections import defaultdict
-__all__ = ["partition_at_level", "modularity", "best_partition", "generate_dendrogram", "generate_dendogram", "induced_graph"]
+from tqdm import tqdm
+from snpp.utils.signed_graph import matrix2graph
+
+
+__all__ = ["partition_at_level", "modularity",
+           "best_partition", "generate_dendrogram",
+           "generate_dendogram", "induced_graph"]
+
 __author__ = """Thomas Aynaud (thomas.aynaud@lip6.fr)"""
 #    Copyright (C) 2009 by
 #    Thomas Aynaud <thomas.aynaud@lip6.fr>
@@ -117,7 +124,7 @@ def modularity(partition, graph) :
     if links_p == 0  or links_n == 0:
         raise ValueError("A graph without link has an undefined modularity")
 
-    for node in graph:
+    for node in tqdm(graph):
         com = partition[node]
         deg_p[com] += graph_p.degree(node, weight = 'weight')
         deg_n[com] += graph_n.degree(node, weight = 'weight')
@@ -274,16 +281,24 @@ def generate_dendrogram(graph, part_init = None) :
     current_graph = induced_graph(partition, current_graph)
     status.init(current_graph)
 
-    while True :
+    while True:
+        print("__one_level")
         __one_level(current_graph, status)
         new_mod = __modularity(status)
-        if new_mod - mod < __MIN :
+        if new_mod - mod < __MIN:
             break
         partition = __renumber(status.node2com)
+
+        print('#partitions={}'.format(len(partition)))
         status_list.append(partition)
         mod = new_mod
+
+        print("induced_graph()")
         current_graph = induced_graph(partition, current_graph)
+
+        print("Status.init()")
         status.init(current_graph)
+        print("INFO: #iteration={}".format(len(status_list)))
     return status_list[:]
 
 
@@ -320,7 +335,7 @@ def induced_graph(partition, graph) :
     ret = nx.MultiGraph()
     ret.add_nodes_from(partition.values())
 
-    for node1, node2, datas in graph.edges_iter(data = True) :
+    for node1, node2, datas in tqdm(graph.edges_iter(data=True)):
         weight = datas.get("weight", 1)
         sign = datas['sign']
         com1 = partition[node1]
@@ -340,7 +355,7 @@ def __renumber(dictionary) :
     ret = dictionary.copy()
     new_values = dict([])
 
-    for key in dictionary.keys():
+    for key in tqdm(dictionary.keys()):
         value = dictionary[key]
         new_value = new_values.get(value, -1)
         if new_value == -1 :
@@ -389,12 +404,12 @@ def __one_level(graph, status) :
     cur_mod = __modularity(status)
     new_mod = cur_mod
 
-    while modif  and nb_pass_done != __PASS_MAX :
+    while modif and nb_pass_done != __PASS_MAX :
         cur_mod = new_mod
         modif = False
         nb_pass_done += 1
-
-        for node in graph.nodes() :
+        print('#pass_done={}'.format(nb_pass_done))
+        for node in tqdm(graph.nodes()):
             com_node = status.node2com[node]
             # k_i / 2m
             # should be m?
@@ -495,24 +510,30 @@ class Status(object):
         new_status.internals_n = self.internals_n.copy()
         new_status.degrees_n = self.degrees_n.copy()
         new_status.gdegrees_n = self.gdegrees_n.copy()
-        new_status.total_weight_n = self.total_weight_n        
+        new_status.total_weight_n = self.total_weight_n
 
-        
-    def init(self, graph, part = None) :
+    def init(self, graph, part=None):
         """Initialize the status of a graph with every node in one community"""
         graph_p, graph_n = split_graph_by_sign(graph)
 
-        assert graph.number_of_edges() == (graph_p.number_of_edges() + graph_n.number_of_edges())
+        assert graph.number_of_edges() == (graph_p.number_of_edges() + graph_n.number_of_edges()), \
+            "{} != {} + {}".format(graph.number_of_edges(),
+                                   graph_p.number_of_edges(),
+                                   graph_n.number_of_edges())
 
-        count = 0  
+        count = 0
 
         self.total_weight_p = graph_p.size(weight='weight')  # $m$
         self.total_weight_n = graph_n.size(weight='weight')
-        if part == None :
-            for node in graph.nodes() :
+
+        assert self.total_weight_p > 0
+        assert self.total_weight_n > 0
+
+        if part is None:
+            for node in tqdm(graph.nodes()):
                 self.node2com[node] = count
-                deg_p = float(graph_p.degree(node, weight = 'weight'))
-                deg_n = float(graph_n.degree(node, weight = 'weight'))
+                deg_p = float(graph_p.degree(node, weight='weight'))
+                deg_n = float(graph_n.degree(node, weight='weight'))
                 if deg_p < 0 or deg_n < 0:
                     raise ValueError("Bad graph type, use positive weights")
                 self.degrees_p[count] = deg_p
@@ -648,14 +669,23 @@ def __modularity(status) :
     return result
 
 
-def main() :
+def best_partition_matrix(A, W, k):
+    """wrapper for best_partition
+    input is sign matrix and weight
+    """
+    print("WARNING: ignoring k={} in Louvain".format(k))
+    g = matrix2graph(A, W)
+    return best_partition(g)
+
+
+def main():
     """Main function to mimic C++ version behavior"""
-    try :
+    try:
         filename = sys.argv[1]
         graphfile = __load_binary(filename)
         partition = best_partition(graphfile)
         print(str(modularity(partition, graphfile)), file=sys.stderr)
-        for elem, part in partition.items() :
+        for elem, part in partition.items():
             print(str(elem) + " " + str(part))
     except (IndexError, IOError):
         print("Usage : ./community filename")

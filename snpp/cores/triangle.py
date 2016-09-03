@@ -1,4 +1,6 @@
 import numpy as np
+
+from tqdm import tqdm
 from scipy.sparse import isspmatrix_csr
 from collections import Counter
 
@@ -54,8 +56,8 @@ def first_order_triangles_count(A, C, T):
         note that (n_1, n_j) \in T
     """
     assert isspmatrix_csr(A)
-
-    for ni, nj in T:
+    print("greedy -> first_order_triangles_count:")
+    for ni, nj in tqdm(T):
         # seems no support for bit-wise operation on scipy.sparse
         adj_vect = np.logical_and(A[ni, :].todense(),
                                   A[nj, :].todense())

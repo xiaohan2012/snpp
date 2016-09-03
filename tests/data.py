@@ -123,4 +123,3 @@ def status_0(request):
     s = Status()
     s.init(g)
     return s
-
