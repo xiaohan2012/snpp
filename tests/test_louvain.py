@@ -1,14 +1,19 @@
 import contexts as ctx
 
 import pytest
-from scipy.sparse import csr_matrix
+import numpy as np
 import networkx as nx
+
+from numpy.testing import assert_allclose
+from scipy.sparse import csr_matrix
+
 from snpp.cores.louvain import best_partition, Status, \
     __modularity, modularity, \
     __remove, __insert, __neighcom, \
     induced_graph, \
     __one_level, \
-    best_partition_matrix
+    best_partition_matrix, \
+    split_graph_by_sign
 
 from snpp.utils.data import make_lowrank_matrix
 from data import lowrank_graph as g, status_0 as s0
@@ -21,18 +26,19 @@ N = group_size * rank
 
 
 def test_detect_community(g):
-    expected = list(chain(*(repeat(i, group_size) for i in range(rank))))  # 0,0..1,1..2,2..3,3..
+    expected = np.array(list(chain(*(repeat(i, group_size) for i in range(rank)))))  # 0,0..1,1..2,2..3,3..
 
-    part = best_partition(g)
+    part = best_partition(g, 4)
     coms = [part[i] for i in range(N)]
-    
-    assert coms == expected
+    print(part)
+    assert_allclose(coms, expected)
+
 
 
 def test_best_partition_matrix():
     expected = list(chain(*(repeat(i, group_size) for i in range(rank))))  # 0,0..1,1..2,2..3,3..
     A = csr_matrix(make_lowrank_matrix(group_size, rank))
-    part = best_partition_matrix(A, W=None, k=None)
+    part = best_partition_matrix(A, W=None, k=4)
     coms = [part[i] for i in range(N)]
     
     assert coms == expected
@@ -63,7 +69,7 @@ def test_status_true(g):
     part = {0: 0, 1: 0, 2: 1, 3: 1}
     s.init(g, part)
 
-    assert s.degrees_p == {0: 6, 1: 6} 
+    assert s.degrees_p == {0: 6, 1: 6}
     assert s.degrees_n == {0: 4, 1: 4}
     assert s.gdegrees_p == {i: 3 for i in range(N)}
     assert s.gdegrees_n == {i: 2 for i in range(N)}
@@ -83,7 +89,7 @@ def test_status_false(g):
     part = {0: 0, 1: 1, 2: 0, 3: 1}
     s.init(g, part)
 
-    assert s.degrees_p == {0: 6, 1: 6} 
+    assert s.degrees_p == {0: 6, 1: 6}
     assert s.degrees_n == {0: 4, 1: 4}
     assert s.gdegrees_p == {i: 3 for i in range(N)}
     assert s.gdegrees_n == {i: 2 for i in range(N)}
@@ -170,7 +176,7 @@ def test_insert(g):
     assert s.degrees_p == s1.degrees_p
     assert s.degrees_n == s1.degrees_n
     assert s.internals_p == s1.internals_p
-    assert s.internals_n == s1.internals_n    
+    assert s.internals_n == s1.internals_n
 
 
 def test_induced_graph(g):
@@ -196,3 +202,9 @@ def test_one_level(g):
     assert part[0] == part[1]
     assert part[2] == part[3]
     assert part[1] != part[3]
+
+
+def test_split_graph_by_sign(g):
+    gp, gn = split_graph_by_sign(g)
+    assert set([(0, 0), (0, 1), (1, 1), (2, 2), (2, 3), (3, 3)]) == set(gp.edges())
+    assert set([(0, 2), (1, 2), (0, 3), (1, 3)]) == set(gn.edges())

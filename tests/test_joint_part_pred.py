@@ -10,6 +10,7 @@ from numpy.testing import assert_almost_equal
 from snpp.cores.lowrank import weighted_partition_sparse
 from snpp.cores.budget_allocation import exponential_budget
 from snpp.cores.max_balance import greedy
+from snpp.cores.louvain import best_partition_matrix
 from snpp.utils.matrix import zero, difference_ratio
 from contexts import spark_context
 
@@ -58,6 +59,28 @@ def test_iterative_approach(rand_lowrank_mat,
     # print(C)
     # print(arc)
     # assert arc == 1.0
+
+
+def test_iterative_approach_louvain(rand_lowrank_mat,
+                                    true_lowrank_mat,
+                                    spark_context):
+    """using louvain algorithm for graph partitioning
+    """
+    A, W, T, k = parameters(rand_lowrank_mat)
+    C, P = iterative_approach(
+        A, W, T, k,
+        graph_partition_f=best_partition_matrix,
+        budget_allocation_f=exponential_budget,
+        budget_allocation_kwargs=dict(exp_const=2),
+        solve_maxbalance_f=greedy)
+    assert isspmatrix_csr(P)
+
+    pred_mat = (A + P).toarray()
+    print(pred_mat)
+    error_rate = difference_ratio(pred_mat, true_lowrank_mat)
+    print(error_rate)
+    
+    assert error_rate > 0.18
 
     
 def test_single_run_approach(rand_lowrank_mat,
