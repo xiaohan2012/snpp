@@ -9,7 +9,7 @@ def edge_weight_sum(edges, W):
     else:
         return sum(W[n1, n2] for n1, n2 in edges)
 
-    
+
 def greedy(A, W, C, B, T):
     """
     Args:

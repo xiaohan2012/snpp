@@ -30,8 +30,8 @@ def can_be_balanced(e, e1, e2, C):
 
 def get_sign_1st_order(e, e1, e2, C):
     nodes, signs = extract_nodes_and_signs(e, e1, e2)
-    
-    if in_different_partitions(nodes, C) and signs == [-1, -1]:
+    neg11 = [-1, -1]
+    if in_different_partitions(nodes, C) and signs == neg11:
         # weak balance
         return -1
     else:
@@ -56,21 +56,27 @@ def first_order_triangles_count(A, C, T):
         note that (n_1, n_j) \in T
     """
     assert isspmatrix_csr(A)
+    A_lil = A.tolil()  # fast single element indexing
     print("greedy -> first_order_triangles_count:")
-    for ni, nj in tqdm(T):
-        # seems no support for bit-wise operation on scipy.sparse
-        adj_vect = np.logical_and(A[ni, :].todense(),
-                                  A[nj, :].todense())
-        adj_vect[0, ni] = adj_vect[0, nj] = 0
-        _, nks = adj_vect.nonzero()
-        
-        counter_by_sign = Counter()  # cleared after each main loop
+
+    # caching `nonzero`
+    nonzero_d = {}
+    nodes = set([i for e in T for i in e])
+    for n in nodes:
+        nonzero_d[n] = set(A[n, :].nonzero()[1])
+
+    for ni, nj in T:
+        idx1 = nonzero_d[ni]
+        idx2 = nonzero_d[nj]
+
+        nks = filter(lambda nk: A_lil[ni, nk] != 0 and A_lil[nj, nk] != 0,
+                     idx1.intersection(idx2) - {ni, nj})
+        counter_by_sign = Counter()
+        e = (ni, nj)
         for nk in nks:
-            if A[ni, nk] != 0 and A[nj, nk] != 0:  # edges not missing
-                e = (ni, nj)
-                e1 = (ni, nk, A[ni, nk])
-                e2 = (nj, nk, A[nj, nk])
-                correct_sign = get_sign_1st_order(e, e1, e2, C)
-                counter_by_sign[correct_sign] += 1
+            e1 = (ni, nk, A_lil[ni, nk])
+            e2 = (nj, nk, A_lil[nj, nk])
+            correct_sign = get_sign_1st_order(e, e1, e2, C)
+            counter_by_sign[correct_sign] += 1
         for sign, count in counter_by_sign.items():
             yield (ni, nj, sign, count)
