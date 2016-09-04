@@ -8,7 +8,8 @@ from snpp.cores.louvain import best_partition_matrix
 from snpp.utils.matrix import load_sparse_csr, \
     save_sparse_csr, \
     split_train_test, \
-    difference_ratio_sparse
+    difference_ratio_sparse, \
+    delete_csr_entries
 from snpp.utils.signed_graph import fill_diagonal, make_symmetric
 
 dataset = 'slashdot'
@@ -21,7 +22,7 @@ random_seed = 123456
 raw_mat_path = 'data/{}.npz'.format(dataset)
 
 
-recache_input = False
+recache_input = True
 
 
 if __name__ == "__main__":
@@ -48,6 +49,11 @@ if __name__ == "__main__":
         train_m = make_symmetric(train_m)
         print('filling diagonal...')
         train_m = fill_diagonal(train_m)
+
+        # remove overlap in train_m and test_m from test_m
+        overlaps = set(zip(*train_m.nonzero())).intersection(set(zip(*test_m.nonzero())))
+        print(len(overlaps), train_m.nnz, test_m.nnz)
+        test_m = delete_csr_entries(test_m, overlaps)
         
         print('saving pre-split train and test matrix...')
         save_sparse_csr('data/slashdot/train_sym', train_m)
@@ -56,6 +62,9 @@ if __name__ == "__main__":
         print('loading pre-split train and test matrix...')
         train_m = load_sparse_csr('data/slashdot/train_sym.npz')
         test_m = load_sparse_csr('data/slashdot/test.npz')
+    overlaps = set(zip(*train_m.nonzero())).intersection(set(zip(*test_m.nonzero())))
+    assert len(overlaps) == 0, \
+        'train and test has overlap {}: {}'.format(len(overlaps), overlaps)
     
     targets = list(zip(*test_m.nonzero()))
     print('#targets = {}'.format(len(targets)))

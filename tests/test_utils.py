@@ -10,7 +10,8 @@ from snpp.utils.matrix import zero, \
     split_train_dev_test, \
     split_train_test, \
     difference_ratio, \
-    difference_ratio_sparse
+    difference_ratio_sparse, \
+    delete_csr_entries
 from data import random_graph, sparse_Q1, Q1_d
 
 
@@ -74,3 +75,12 @@ def test_difference_ratio_sparse(sparse_Q1):
     sparse_Q2 = sparse_Q1.copy()
     sparse_Q2[0, 1] = -1
     assert_allclose(difference_ratio_sparse(sparse_Q1, sparse_Q2), 1/10)
+
+
+def test_delete_csr_entries(sparse_Q1):
+    assert sparse_Q1[0, 1] == 1
+    assert sparse_Q1[0, 2] == -1
+    
+    m = delete_csr_entries(sparse_Q1, [(0, 1), (0, 2)])
+    assert m[0, 1] == 0
+    assert m[0, 2] == 0

@@ -11,7 +11,7 @@ def make_symmetric(m):
     Return csr_matrix
     """
     entries_to_add = []
-    for i, j in zip(*m.nonzero()):
+    for i, j in tqdm(zip(*m.nonzero())):
         if m[j, i] == 0:
             entries_to_add.append((j, i, m[i, j]))
     idx1, idx2, data = zip(*(indexed_entries(m) + entries_to_add))
@@ -23,7 +23,7 @@ def fill_diagonal(m, val=1):
     assert m.shape[0] == m.shape[1]
     m_new = m.todok()
 
-    for i in range(m_new.shape[0]):
+    for i in tqdm(range(m_new.shape[0])):
         m_new[i, i] = val
     return m_new.tocsr()
 

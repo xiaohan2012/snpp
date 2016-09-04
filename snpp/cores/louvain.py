@@ -532,6 +532,12 @@ class Status(object):
         """Initialize the status of a graph with every node in one community"""
         graph_p, graph_n = split_graph_by_sign(graph)
 
+        # DEBUG
+        if graph.number_of_edges() != (graph_p.number_of_edges() + graph_n.number_of_edges()):
+            nx.write_gpickle(graph, '/home/cloud-user/code/snpp/data/slashdot/graph.pkl')
+            nx.write_gpickle(graph_p, '/home/cloud-user/code/snpp/data/slashdot/graph_p.pkl')
+            nx.write_gpickle(graph_n, '/home/cloud-user/code/snpp/data/slashdot/graph_n.pkl')
+            
         assert graph.number_of_edges() == (graph_p.number_of_edges() + graph_n.number_of_edges()), \
             "{} != {} + {}".format(graph.number_of_edges(),
                                    graph_p.number_of_edges(),

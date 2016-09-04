@@ -95,3 +95,16 @@ def split_train_test(m, weights=[0.9, 0.1]):
     train, test = train_test_split(entries, train_size=weights[0], test_size=weights[1])
     return (_make_matrix(train, m.shape),
             _make_matrix(test, m.shape))
+
+
+def delete_csr_entries(m, idxs):
+    """idxs: list of (row_id, col_id) to delete
+
+    not inplace
+    """
+    m_new = dok_matrix(m.shape)
+    idxs = set(idxs)
+    for i, j in zip(*m.nonzero()):
+        if (i, j) not in idxs:
+            m_new[i, j] = m[i, j]
+    return m_new.tocsr()
