@@ -3,9 +3,9 @@ import contexts as ctx
 import numpy as np
 from scipy.sparse import isspmatrix_csr
 
-from snpp.cores.max_balance import greedy, \
+from snpp.cores.max_balance import greedy, greedy_g, \
     edge_weight_sum
-from test_triangle import A6
+from test_triangle import A6, g6
 
 
 def test_edge_weight_sum():
@@ -36,3 +36,26 @@ def test_greedy(A6):
     assert list(zip(*P.nonzero())) == [(0, 1), (4, 5)]
     assert P[0, 1] == -1
     assert P[4, 5] == 1
+
+
+C = np.array(['a', 'b', 'c', 'c', 'd', 'x'])
+targets = set([(0, 1), (4, 5)])
+
+
+# just different budgets
+def test_greedy_g_1(g6):
+    assert not g6.has_edge(0, 1)
+    g = greedy_g(g6, C, B=1, T=targets)
+    assert g[0][1] == {'weight': 1, 'sign': -1}
+
+
+def test_greedy_g_2(g6): 
+    assert not g6.has_edge(4, 5)
+    g = greedy_g(g6, C, B=2, T=targets)
+    assert g[4][5] == {'weight': 1, 'sign': 1}
+
+
+def test_greedy_g_3(g6):
+    assert not g6.has_edge(4, 5)
+    g = greedy_g(g6, C, B=100, T=targets)
+    assert g[4][5] == {'weight': 1, 'sign': 1}

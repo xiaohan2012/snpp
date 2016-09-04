@@ -44,17 +44,28 @@ def symmetric_stat(m):
     return c1, c2
 
 
-def matrix2graph(A, W):
+def matrix2graph(A, W, multigraph=True):
     """returns MultiGraph
     """
-    print('building MultiGraph')
-    g = nx.MultiGraph()  # allow parallel edges
+
     idxs = tqdm(zip(*A.nonzero()))
-    if W is None:
-        for i, j in idxs:
-            g.add_edge(i, j, key=A[i, j], weight=1, sign=A[i, j])
+
+    if multigraph:
+        print('building MultiGraph')
+        g = nx.MultiGraph()  # allow parallel edges
+        if W is None:
+            for i, j in idxs:
+                g.add_edge(i, j, key=A[i, j], weight=1, sign=A[i, j])
+        else:
+            for i, j in idxs:
+                g.add_edge(i, j, key=A[i, j], weight=W[i, j], sign=A[i, j])
     else:
-        for i, j in idxs:
-            g.add_edge(i, j, key=A[i, j], weight=W[i, j], sign=A[i, j])
+        print('building Graph')
+        g = nx.Graph()  # allow parallel edges
+        if W is None:
+            g.add_edges_from((i, j, {'weight': 1, 'sign': A[i, j]})
+                             for i, j in idxs)
+        else:
+            g.add_edges_from((i, j, {'weight': W[i, j], 'sign': A[i, j]})
+                             for i, j in idxs)
     return g
-    

@@ -1,14 +1,17 @@
 import contexts as ctx
 
 import pytest
-from scipy.sparse import csr_matrix
 import numpy as np
+
+from scipy.sparse import csr_matrix
 from nose.tools import assert_raises
 
 from snpp.cores.triangle import extract_nodes_and_signs, \
     in_different_partitions, \
     get_sign_1st_order, \
-    first_order_triangles_count
+    first_order_triangles_count, \
+    first_order_triangles_count_g
+from snpp.utils.signed_graph import matrix2graph
 
 
 def test_extract_nodes_and_signs():
@@ -76,6 +79,11 @@ def A6():
     return csr_matrix(A)
 
 
+@pytest.fixture
+def g6():
+    return matrix2graph(A6(), None, multigraph=False)
+
+
 def test_first_order_triangles_count(A6):
     C1 = np.array(['a', 'b', 'b', 'c', 'd', 'x'])
     C2 = np.array(['a', 'b', 'c', 'c', 'd', 'x'])
@@ -87,5 +95,23 @@ def test_first_order_triangles_count(A6):
 
     iters = first_order_triangles_count(A6, C2,
                                         T=[(0, 1), (2, 3), (4, 5)])
+    assert set(iters) == {(0, 1, -1, 2), (0, 1, 1, 1),
+                          (2, 3, 1, 2), (4, 5, 1, 1)}
+
+
+def test_first_order_triangles_count_g(g6):
+    """pass nx.Graph as parameter
+    """
+    C1 = np.array(['a', 'b', 'b', 'c', 'd', 'x'])
+    C2 = np.array(['a', 'b', 'c', 'c', 'd', 'x'])
+    iters = first_order_triangles_count_g(g6, C1, T=[(0, 1)])
+
+    assert set(iters) == {(0, 1, -1, 1), (0, 1, 1, 2)}
+
+    iters = first_order_triangles_count_g(g6, C2, T=[(0, 1)])
+    assert set(iters) == {(0, 1, -1, 2), (0, 1, 1, 1)}
+
+    iters = first_order_triangles_count_g(g6, C2,
+                                          T=[(0, 1), (2, 3), (4, 5)])
     assert set(iters) == {(0, 1, -1, 2), (0, 1, 1, 1),
                           (2, 3, 1, 2), (4, 5, 1, 1)}

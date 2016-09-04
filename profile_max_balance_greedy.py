@@ -9,4 +9,4 @@ targets = set(zip(*test_m.nonzero()))
 
 n, _ = train_m.shape
 print('what the...')
-greedy(train_m, None, C=np.ones(n), B=1, T=targets)
+greedy_g(train_m, None, C=np.ones(n), B=5, T=targets)

@@ -117,8 +117,8 @@ def partition_sparse(A, k, sc, **kwargs):
     X, Y = alq_spark(A, k, sc, **kwargs)
     print(X.dtype)
     
-    X = np.asarray(X, dtype=np.float16)
-    Y = np.asarray(Y, dtype=np.float16)
+    # X = np.asarray(X, dtype=np.float16)
+    # Y = np.asarray(Y, dtype=np.float16)
     
     A_p = np.dot(X, Y)
     _, labels = predict_cluster_labels(A_p, k, order='desc')

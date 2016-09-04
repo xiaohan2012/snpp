@@ -1,3 +1,4 @@
+import networkx as nx
 import numpy as np
 
 from tqdm import tqdm
@@ -76,6 +77,33 @@ def first_order_triangles_count(A, C, T):
         for nk in nks:
             e1 = (ni, nk, A_lil[ni, nk])
             e2 = (nj, nk, A_lil[nj, nk])
+            correct_sign = get_sign_1st_order(e, e1, e2, C)
+            counter_by_sign[correct_sign] += 1
+        for sign, count in counter_by_sign.items():
+            yield (ni, nj, sign, count)
+
+
+def first_order_triangles_count_g(g, C, T):
+    """
+    Args:
+    
+    g: nx.Graph
+    C: cluster label array
+    T: target edges
+
+    Returns:
+    generator of (n_i, n_j, sign, count)
+        note that (n_1, n_j) \in T
+    """
+    assert isinstance(g, nx.Graph)
+
+    for ni, nj in T:
+        counter_by_sign = Counter()
+        e = (ni, nj)
+        nks = set(g.adj[ni]).intersection(set(g.adj[nj])) - {ni, nj}
+        for nk in nks:
+            e1 = (ni, nk, g[ni][nk]['sign'])
+            e2 = (nj, nk, g[nj][nk]['sign'])
             correct_sign = get_sign_1st_order(e, e1, e2, C)
             counter_by_sign[correct_sign] += 1
         for sign, count in counter_by_sign.items():

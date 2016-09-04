@@ -1,4 +1,5 @@
-from .triangle import first_order_triangles_count
+from .triangle import first_order_triangles_count, \
+    first_order_triangles_count_g
 from scipy.sparse import dok_matrix
 from copy import copy
 
@@ -49,3 +50,45 @@ def greedy(A, W, C, B, T):
         targets.remove((n1, n2))
         P[n1, n2] = s
     return P.tocsr()
+
+
+
+def greedy_g(g, C, B, T):
+    """
+    Args:
+    
+    g: signed network
+    C: cluster label array
+    B: budget
+    T: set of target edges (node i, node j)
+
+    Returns:
+    P: predicted sign matrix (csr)
+    """
+    assert isinstance(T, set)
+    targets = copy(T)
+
+    T_p = set()
+    while True:
+        budget_used = sum(g[i][j]['weight'] for i, j in T_p)
+        if (budget_used > B or len(targets) <= 0):
+            break
+        try:
+            n1, n2, s, c = max(first_order_triangles_count_g(g, C, targets),
+                               key=lambda tpl: tpl[-1])
+        except ValueError:  # no first-order triangles
+            print("WARN: empty first-order triangles. So exit loop")
+            print('targets:')
+            print(targets)
+            break
+        
+        print('assigning {} to ({}, {}) produces {} more balanced triangles'.format(
+            s, n1, n2, c
+        ))
+        
+        T_p.add((n1, n2))
+        targets.remove((n1, n2))
+
+        # add edge
+        g.add_edge(n1, n2, weight=1, sign=s)
+    return g
