@@ -1,6 +1,6 @@
 
 
-def max_budget(C, A, P, iter_n,
+def max_budget(C, g, iter_n,
                total_budget=None):
     """
     Args:
@@ -18,7 +18,7 @@ def max_budget(C, A, P, iter_n,
     return total_budget
     
 
-def linear_budget(C, A, P, iter_n, linear_const=1):
+def linear_budget(C, g, iter_n, linear_const=1):
     """
     budget = iter_n x constant
     """
@@ -26,7 +26,7 @@ def linear_budget(C, A, P, iter_n, linear_const=1):
     return iter_n * linear_const
 
 
-def exponential_budget(C, A, P, iter_n, exp_const=2):
+def exponential_budget(C, g, iter_n, exp_const=2):
     """
     budget = exp_const ^ iter_n
     """

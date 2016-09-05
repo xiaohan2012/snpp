@@ -9,7 +9,8 @@ Main change: definition of modularity
 import networkx as nx
 from collections import defaultdict
 from tqdm import tqdm
-from snpp.utils.signed_graph import matrix2graph
+from snpp.utils.signed_graph import matrix2graph, \
+    to_multigraph
 
 
 __all__ = ["partition_at_level", "modularity",
@@ -148,7 +149,7 @@ def modularity(partition, graph):
         res += ((inc_p[com] / (2*links_p)) - (deg_p[com] / (2.*links_p))**2)
         res -= ((inc_n[com] / (2*links_n)) - (deg_n[com] / (2.*links_n))**2)
     return res
-
+    
 
 def best_partition(graph, k):
     """Compute the partition of the graph nodes which maximises the modularity
@@ -210,7 +211,9 @@ def best_partition(graph, k):
     >>> nx.draw_networkx_edges(G,pos, alpha=0.5)
     >>> plt.show()
     """
-    dendo = generate_dendrogram(graph, k)
+    # convert to multigraph
+    mg = to_multigraph(graph)
+    dendo = generate_dendrogram(mg, k)
     return partition_at_level(dendo, len(dendo) - 1)
 
 
@@ -689,15 +692,6 @@ def __modularity(status):
         if links_n > 0:
             result -= in_degree_n / (2.*links_n) - ((degree_n / (2.*links_n))**2)
     return result
-
-
-def best_partition_matrix(A, W, k):
-    """wrapper for best_partition
-    input is sign matrix and weight
-    """
-    print("WARNING: approximating k={} in Louvain".format(k))
-    g = matrix2graph(A, W)
-    return best_partition(g, k)
 
 
 def main():

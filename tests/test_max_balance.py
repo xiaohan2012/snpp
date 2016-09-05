@@ -44,18 +44,18 @@ targets = set([(0, 1), (4, 5)])
 
 # just different budgets
 def test_greedy_g_1(g6):
+    preds = greedy_g(g6, C, B=1, T=targets)
+    assert preds == [(0, 1, -1)]
     assert not g6.has_edge(0, 1)
-    g = greedy_g(g6, C, B=1, T=targets)
-    assert g[0][1] == {'weight': 1, 'sign': -1}
 
 
 def test_greedy_g_2(g6): 
-    assert not g6.has_edge(4, 5)
-    g = greedy_g(g6, C, B=2, T=targets)
-    assert g[4][5] == {'weight': 1, 'sign': 1}
+    preds = greedy_g(g6, C, B=2, T=targets)
+    assert preds == [(0, 1, -1), (4, 5, 1)]
+    assert not g6.has_edge(4, 5)  # no side effect
 
 
 def test_greedy_g_3(g6):
+    preds = greedy_g(g6, C, B=100, T=targets)
+    assert preds == [(0, 1, -1), (4, 5, 1)]
     assert not g6.has_edge(4, 5)
-    g = greedy_g(g6, C, B=100, T=targets)
-    assert g[4][5] == {'weight': 1, 'sign': 1}

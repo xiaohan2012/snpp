@@ -1,6 +1,5 @@
 import numpy as np
-from scipy.sparse import dok_matrix
-from itertools import permutations
+from itertools import combinations
 
 
 def nonzero_edges(A):
@@ -17,23 +16,25 @@ def predict_signs_using_partition(C, targets=None):
     
     Returns:
 
-    Sign matrix on targets (dok_matrix)
+    list of (i, j, sign)
     """
 
-    n = len(C)
-    P = dok_matrix((n, n))
+    preds = []
     idx = list(range(len(C)))
 
     if targets is None:
-        targets = permutations(idx, 2)
+        targets = combinations(idx, 2)
     targets = set(targets)
     
     for i, j in targets:
         if C[i] == C[j]:
-            P[i, j] = 1
+            s = 1
         else:
-            P[i, j] = -1
-    return P
+            s = -1
+        if i > j:
+            i, j = j, i
+        preds.append((i, j, s))            
+    return preds
 
 
 

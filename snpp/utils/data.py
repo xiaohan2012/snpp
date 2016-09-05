@@ -32,51 +32,11 @@ def load_csv_as_sparse(path):
     return m.tocsr()
 
 
-def example_for_intuition_OLD(group_size, group_number, foe_number_per_pair):
-    N = group_size * group_number
-    Q = np.zeros((N, N))
-    true_Q = np.zeros((N, N))
-
-    friends = []
-    foes = []
-    members_by_group = [
-        list(
-            range(g * group_size, g * group_size + group_size))
-        for g in range(group_number)]
-    
-    for g in members_by_group:
-        for i in g:
-            true_Q[i, i] = 1
-        for i, j in combinations(g, 2):
-            true_Q[i, j] = true_Q[j, i] = 1
-
-    true_Q[true_Q == 0] = -1
-
-    for g in members_by_group:
-        for i in g[:-1]:
-            friends.append((i, i + 1))
-            
-    for g1, g2 in combinations(members_by_group, 2):
-        for i in range(foe_number_per_pair):
-            foe = (random.choice(g1), random.choice(g2))
-            foes.append(foe)
-
-    for i in range(N):
-        Q[i, i] = 1
-
-    for u, v in friends:
-        Q[u, v] = Q[v, u] = 1
-
-    for u, v in foes:
-        Q[u, v] = Q[v, u] = -1
-
-    return Q, true_Q
-
-
 def example_for_intuition(group_size, group_number, known_edge_percentage):
     assert known_edge_percentage <= 1
     N = group_size * group_number
-    mat_size = N * N
+    mat_size = N * (N - 1) / 2
+
     Q = np.zeros((N, N))
     true_Q = np.zeros((N, N))
 
@@ -93,7 +53,7 @@ def example_for_intuition(group_size, group_number, known_edge_percentage):
 
     true_Q[true_Q == 0] = -1
 
-    n_known = int(mat_size * known_edge_percentage / 2)
+    n_known = int(mat_size * known_edge_percentage)
 
     all_edges = list(combinations(range(N), 2))
 

@@ -5,6 +5,7 @@ import numpy as np
 import networkx as nx
 
 from numpy.testing import assert_allclose
+from itertools import repeat, chain
 from scipy.sparse import csr_matrix
 
 from snpp.cores.louvain import best_partition, Status, \
@@ -12,12 +13,13 @@ from snpp.cores.louvain import best_partition, Status, \
     __remove, __insert, __neighcom, \
     induced_graph, \
     __one_level, \
-    best_partition_matrix, \
     split_graph_by_sign
 
 from snpp.utils.data import make_lowrank_matrix
-from data import lowrank_graph as g, status_0 as s0
-from itertools import repeat, chain
+from snpp.utils.signed_graph import to_multigraph
+
+from data import lowrank_graph as g, status_0 as s0, \
+    lowrank_multigraph as mg
 
 
 group_size = 10
@@ -32,16 +34,6 @@ def test_detect_community(g):
     coms = [part[i] for i in range(N)]
     print(part)
     assert_allclose(coms, expected)
-
-
-
-def test_best_partition_matrix():
-    expected = list(chain(*(repeat(i, group_size) for i in range(rank))))  # 0,0..1,1..2,2..3,3..
-    A = csr_matrix(make_lowrank_matrix(group_size, rank))
-    part = best_partition_matrix(A, W=None, k=4)
-    coms = [part[i] for i in range(N)]
-    
-    assert coms == expected
 
 
 group_size = 2
@@ -62,12 +54,13 @@ def test_status_0(s0):
     assert s0.total_weight_n == 4
 
 
-def test_status_true(g):
+def test_status_true(mg):
     """correct partition
-    """    
+    """
+    
     s = Status()
     part = {0: 0, 1: 0, 2: 1, 3: 1}
-    s.init(g, part)
+    s.init(mg, part)
 
     assert s.degrees_p == {0: 6, 1: 6}
     assert s.degrees_n == {0: 4, 1: 4}
@@ -82,12 +75,12 @@ def test_status_true(g):
     assert s.node2com == part
 
 
-def test_status_false(g):
+def test_status_false(mg):
     """incorrect partition
     """
     s = Status()
     part = {0: 0, 1: 1, 2: 0, 3: 1}
-    s.init(g, part)
+    s.init(mg, part)
 
     assert s.degrees_p == {0: 6, 1: 6}
     assert s.degrees_n == {0: 4, 1: 4}
@@ -102,8 +95,8 @@ def test_status_false(g):
     assert s.node2com == part
 
     
-def test_modularity(g, s0):
-    # vanila calculation 
+def test_modularity(mg, s0):
+    # vanila calculation
     Q_p = 0
     Q_n = 0
     m_p, m_n =  s0.total_weight_p, s0.total_weight_n
@@ -116,53 +109,53 @@ def test_modularity(g, s0):
     Q_n /= (2*m_n)
     
     assert (Q_p - Q_n) == __modularity(s0)
-    assert modularity({i: i for i in range(N)}, g) == (Q_p - Q_n)
+    assert modularity({i: i for i in range(N)}, mg) == (Q_p - Q_n)
 
     
-def test_modularity_given_partition(g):
+def test_modularity_given_partition(mg):
     s = Status()
     part = {0: 0, 1: 0, 2: 1, 3: 1}
-    s.init(g, part)
+    s.init(mg, part)
 
-    assert __modularity(s) == modularity(part, g)
+    assert __modularity(s) == modularity(part, mg)
 
 
-def test_neighcom(g):
+def test_neighcom(mg):
     s = Status()
     part = {0: 0, 1: 1, 2: 1, 3: 2}
-    s.init(g, part)
-    d = __neighcom(0, g, s)
+    s.init(mg, part)
+    d = __neighcom(0, mg, s)
     assert d == {1: [1, 1], 2: [0, 1]}
 
     s = Status()
     part = {0: 0, 1: 1, 2: 1, 3: 1}
-    s.init(g, part)
-    d = __neighcom(0, g, s)
+    s.init(mg, part)
+    d = __neighcom(0, mg, s)
     assert d == {1: [1, 2]}
 
 
-def test_remove(g):
+def test_remove(mg):
     part = {0: 0, 1: 1, 2: 1, 3: 1}
     s = Status()
-    s.init(g, part)
+    s.init(mg, part)
     __remove(node=1, com=1, weight_p=0, weight_n=2, status=s)
 
     s1 = Status()
-    s1.init(g, {0: 0, 1: -1, 2: 1, 3: 1})
+    s1.init(mg, {0: 0, 1: -1, 2: 1, 3: 1})
     del s1.degrees_p[-1]
     del s1.degrees_n[-1]
     del s1.internals_p[-1]
-    del s1.internals_n[-1]    
+    del s1.internals_n[-1]
     assert s.degrees_p == s1.degrees_p
     assert s.degrees_n == s1.degrees_n
     assert s.internals_p == s1.internals_p
     assert s.internals_n == s1.internals_n
 
 
-def test_insert(g):
+def test_insert(mg):
     part = {0: 0, 1: -1, 2: 1, 3: 1}
     s = Status()
-    s.init(g, part)
+    s.init(mg, part)
     __insert(node=1, com=0, weight_p=1, weight_n=0, status=s)
 
     del s.degrees_p[-1]
@@ -171,7 +164,7 @@ def test_insert(g):
     del s.internals_n[-1]
     
     s1 = Status()
-    s1.init(g, {0: 0, 1: 0, 2: 1, 3: 1})
+    s1.init(mg, {0: 0, 1: 0, 2: 1, 3: 1})
 
     assert s.degrees_p == s1.degrees_p
     assert s.degrees_n == s1.degrees_n
@@ -179,9 +172,9 @@ def test_insert(g):
     assert s.internals_n == s1.internals_n
 
 
-def test_induced_graph(g):
+def test_induced_graph(mg):
     part = {0: 0, 1: 0, 2: 1, 3: 1}
-    g_new = induced_graph(part, g)
+    g_new = induced_graph(part, mg)
     goal = nx.MultiGraph()
     goal.add_edge(0, 0, key=1, weight=3, sign=1)
     goal.add_edge(1, 1, key=1, weight=3, sign=1)
@@ -193,10 +186,10 @@ def test_induced_graph(g):
                             edge_match=equal)
 
 
-def test_one_level(g):
+def test_one_level(mg):
     s = Status()
-    s.init(g)
-    __one_level(g, s)
+    s.init(mg)
+    __one_level(mg, s)
 
     part = s.node2com
     assert part[0] == part[1]
@@ -204,7 +197,7 @@ def test_one_level(g):
     assert part[1] != part[3]
 
 
-def test_split_graph_by_sign(g):
-    gp, gn = split_graph_by_sign(g)
+def test_split_graph_by_sign(mg):
+    gp, gn = split_graph_by_sign(mg)
     assert set([(0, 0), (0, 1), (1, 1), (2, 2), (2, 3), (3, 3)]) == set(gp.edges())
     assert set([(0, 2), (1, 2), (0, 3), (1, 3)]) == set(gn.edges())

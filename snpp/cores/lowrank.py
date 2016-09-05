@@ -1,12 +1,15 @@
 import scipy
+import networkx as nx
 import numpy as np
 from scipy import sparse
 from scipy.sparse import linalg
 from scipy.sparse import csr_matrix
 from pyspark.mllib.recommendation import ALS
 
-from .spectral import predict_cluster_labels
+from .spectral import predict_cluster_labels, predict_cluster_labels_svd
 from ..utils.matrix import indexed_entries
+from ..utils.signed_graph import fill_diagonal
+
 
 csr_dot = csr_matrix.dot
 
@@ -60,6 +63,7 @@ def alq(Q, k, lambda_, max_iter,
     return X, Y, weighted_errors
 
 
+# DEPRECATED
 def alq_weighted_spark(A, W, k, sc, **kwargs):
     """wrapper to make interface consistant
     """
@@ -82,6 +86,10 @@ def alq_spark(A, k, sc, **kwargs):
     Y: np.ndarray (k x n)
     """
     edges = indexed_entries(A)
+    
+    # import _pickle as pkl
+    # pkl.dump(edges, open('data/slashdot/train_edges.pkl', 'wb'))
+    
     edges_rdd = sc.parallelize(edges)
     model = ALS.train(edges_rdd, rank=k, **kwargs)
 
@@ -115,11 +123,27 @@ def partition_sparse(A, k, sc, **kwargs):
     - cluster labels
     """
     X, Y = alq_spark(A, k, sc, **kwargs)
-    print(X.dtype)
-    
-    # X = np.asarray(X, dtype=np.float16)
-    # Y = np.asarray(Y, dtype=np.float16)
-    
+
     A_p = np.dot(X, Y)
     _, labels = predict_cluster_labels(A_p, k, order='desc')
+    return labels
+
+
+def partition_graph(g, k, sc, **kwargs):
+    """takes graph as input
+    """
+    print('to_scipy_sparse_matrix')
+    A = nx.to_scipy_sparse_matrix(g, nodelist=g.nodes(),
+                                  weight='sign', format='csr')
+    A = fill_diagonal(A)
+    assert A[0, 0] == 1
+    
+    print('ALS...')
+    U, _ = alq_spark(A, k, sc, **kwargs)
+    assert U.shape == (A.shape[0], k), "{} != {}".format(
+        U.shape, (A.shape[0], k))
+    
+    print('predict labels (SVD + Kmeans)...')
+    _, labels = predict_cluster_labels_svd(U, k, order='desc')
+
     return labels

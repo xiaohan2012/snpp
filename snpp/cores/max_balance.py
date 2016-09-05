@@ -1,7 +1,10 @@
-from .triangle import first_order_triangles_count, \
-    first_order_triangles_count_g
+import networkx as nx
+
 from scipy.sparse import dok_matrix
 from copy import copy
+
+from .triangle import first_order_triangles_count, \
+    first_order_triangles_count_g
 
 
 def edge_weight_sum(edges, W):
@@ -52,7 +55,6 @@ def greedy(A, W, C, B, T):
     return P.tocsr()
 
 
-
 def greedy_g(g, C, B, T):
     """
     Args:
@@ -63,23 +65,27 @@ def greedy_g(g, C, B, T):
     T: set of target edges (node i, node j)
 
     Returns:
-    P: predicted sign matrix (csr)
+    predictions: (i, j, sign)
     """
+    assert isinstance(g, nx.Graph)
+    g = g.copy()
+    
     assert isinstance(T, set)
     targets = copy(T)
 
+    preds = []
+    
     T_p = set()
     while True:
         budget_used = sum(g[i][j]['weight'] for i, j in T_p)
-        if (budget_used > B or len(targets) <= 0):
+        if (budget_used >= B or len(targets) <= 0):
             break
         try:
             n1, n2, s, c = max(first_order_triangles_count_g(g, C, targets),
                                key=lambda tpl: tpl[-1])
         except ValueError:  # no first-order triangles
             print("WARN: empty first-order triangles. So exit loop")
-            print('targets:')
-            print(targets)
+            print('targets: {}'.format(targets))
             break
         
         print('assigning {} to ({}, {}) produces {} more balanced triangles'.format(
@@ -89,6 +95,6 @@ def greedy_g(g, C, B, T):
         T_p.add((n1, n2))
         targets.remove((n1, n2))
 
-        # add edge
         g.add_edge(n1, n2, weight=1, sign=s)
-    return g
+        preds.append((n1, n2, s))
+    return preds

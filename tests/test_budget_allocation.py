@@ -4,7 +4,7 @@ from snpp.cores.budget_allocation import max_budget, \
     exponential_budget
 
 default_args = {k: None
-                for k in ('C', 'A', 'P')}
+                for k in ('C', 'g')}
 
 
 def test_max_budget():

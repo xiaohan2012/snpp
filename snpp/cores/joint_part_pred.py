@@ -8,68 +8,82 @@ from snpp.utils import nonzero_edges, predict_signs_using_partition
 from snpp.utils.signed_graph import matrix2graph
 
 
-def iterative_approach(A, W, T, k,
+def iterative_approach(g, T, k,
                        graph_partition_f,
                        budget_allocation_f,
                        solve_maxbalance_f,
                        graph_partition_kwargs={},
                        budget_allocation_kwargs={},
-                       solve_maxbalance_kwargs={}):
+                       solve_maxbalance_kwargs={},
+                       truth=None):
     """
     Params:
     
-    A: edge sign matrix
-    W: edge weight matrix
+    g: networkx.Graph
     T: target edge set (set of edges, (i, j))
+       the i, j order doesn't matter because it's undirected
     k: partition number
 
     graph_partition_f: method for graph partitioning
     budget_allocation_f: budget allocation method
     solve_maxbalance_f: method for approximating the max balance problem
 
+    truth: set of (i, j, s), the ground truth for targets
+        for debugging purpose
+
     Returns:
     
     C: partition, partition label array, 1xn
-    P: predicted sign matrix on T (csr_matrix)
+    predictions: list of (i, j, sign)
     """
-    assert W is None or A.shape == W.shape, 'not None and shape mismatch'
-    n1, n2 = A.shape
-    assert n1 == n2, 'dimension mismatch'
+    T = set(T)
+    remaining_targets = copy(T)
 
-    remaining_targets = set(copy(T))
-    assert isinstance(remaining_targets, set)
-    
+    # data format checking
+    for i, j in T:
+        assert i <= j
+
     iter_n = 0
-    P = csr_matrix((n1, n2))
-    while T != nonzero_edges(P):
+    all_predictions = []
+    while len(remaining_targets) > 0:
         iter_n += 1
         print('iteration={}, #remaining targets={}'.format(
             iter_n, len(remaining_targets)))
+
         print("graph partitioning...")
-        C = graph_partition_f(A + P, W, k,
+        C = graph_partition_f(g, k,
                               **graph_partition_kwargs)
-        B = budget_allocation_f(C, A, P, iter_n, **budget_allocation_kwargs)
+        print('cluster:')
+        print(C)
+
+        B = budget_allocation_f(C, g, iter_n, **budget_allocation_kwargs)
+        
         print("solving max_balance")
-        P_prime = solve_maxbalance_f(A + P, W, C, B, T=remaining_targets,
-                                     **solve_maxbalance_kwargs)
-        remaining_targets -= set(zip(*P_prime.nonzero()))
-        P += P_prime
-    # print("inside joint_part_pred:")
-    # print((A + P).toarray())
-    # print(k)
-    C = graph_partition_f(A + P, W, k,
+        predictions = solve_maxbalance_f(g, C, B, T=remaining_targets,
+                                         **solve_maxbalance_kwargs)
+
+        all_predictions += predictions
+        remaining_targets -= set((i, j) for i, j, _ in predictions)
+        g.add_edges_from((i, j, {'weight': 1, 'sign': s})
+                         for i, j, s in predictions)
+
+        if truth:
+            print('Accuracy on {} predictions is {}'.format(
+                len(all_predictions),
+                len(truth.intersection(set(all_predictions))) / len(all_predictions)
+            ))
+
+    C = graph_partition_f(g, k,
                           **graph_partition_kwargs)
-    return C, P
+    return C, all_predictions
 
 
-def single_run_approach(A, W, T, k,
+def single_run_approach(g, T, k,
                         graph_partition_f,
                         graph_partition_kwargs={}):
     """
     """
-    C = graph_partition_f(A, W, k,
+    C = graph_partition_f(g, k,
                           **graph_partition_kwargs)
-    P = predict_signs_using_partition(C, targets=T)
-    return C, P.tocsr()
-    
-    
+    preds = predict_signs_using_partition(C, targets=T)
+    return C, preds

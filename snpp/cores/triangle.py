@@ -97,7 +97,7 @@ def first_order_triangles_count_g(g, C, T):
     """
     assert isinstance(g, nx.Graph)
 
-    for ni, nj in T:
+    for ni, nj in tqdm(T):
         counter_by_sign = Counter()
         e = (ni, nj)
         nks = set(g.adj[ni]).intersection(set(g.adj[nj])) - {ni, nj}

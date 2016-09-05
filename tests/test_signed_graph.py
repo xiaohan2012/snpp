@@ -51,11 +51,12 @@ def test_make_symmetric(Q1_d):
 
 
 def test_matrix2graph(Q1_d):
-    gm = matrix2graph(Q1_d, None, True)
-    g = matrix2graph(Q1_d, None, False)
+    gm = matrix2graph(Q1_d, None, multigraph=True)
+    g = matrix2graph(Q1_d, None, multigraph=False)
     for i, j in gm.edges():
         s = g[i][j]['sign']
         assert gm[i][j][s]['sign'] == s
 
+    assert gm[0][0][1]['sign'] == g[0][0]['sign'] == 1
     assert gm[2][3][1]['sign'] == g[2][3]['sign'] == 1
     assert gm[0][2][-1]['sign'] == g[0][2]['sign'] == -1

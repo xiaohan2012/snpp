@@ -24,7 +24,25 @@ def build_laplacian_related_matrices_sparse(W):
     D_n = np.diag(np.sum(W_n, axis=1))
     D_hat = D_p + D_n
     return W_p, W_n, D_p, D_n, D_hat
+
+
+def predict_cluster_labels_svd(M, k, order):
+    """
+    for non-square matrices
+
+    M: mxn matrix, for exmample the Laplacian
+    """
+    U, s, vh = scipy.linalg.svd(M, full_matrices=False)
+    print('eigen values: {}'.format(s[:k]))
+    if order == 'desc':
+        X = U[:, :k]
+    else:
+        X = U[:, -k:]
     
+    model = KMeans(n_clusters=k)
+    pred_y = model.fit_predict(X)
+    return model, pred_y
+
 
 def predict_cluster_labels(L, k, order):
     """L: the laplacian matrix

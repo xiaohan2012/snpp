@@ -7,6 +7,8 @@ from scipy import sparse
 
 from snpp.utils.data import example_for_intuition, make_lowrank_matrix
 from snpp.cores.louvain import Status
+from snpp.utils.signed_graph import matrix2graph, \
+    to_multigraph
 
 
 def module_attr(request, name, default):
@@ -19,7 +21,6 @@ def rand_lowrank_mat(request):
     rank = module_attr(request, 'rank', 3)
     known_edge_percentage = module_attr(request, 'known_edge_percentage', 0.4)
     random_seed = module_attr(request, 'random_seed', 123456)
-
     random.seed(random_seed)
     np.random.seed(random_seed)
 
@@ -27,7 +28,13 @@ def rand_lowrank_mat(request):
         group_size=int(N / rank),
         group_number=rank,
         known_edge_percentage=known_edge_percentage)
-    return M
+    return sparse.csr_matrix(M)
+
+
+@pytest.fixture
+def rand_lowrank_g(request):
+    m = rand_lowrank_mat(request)
+    return matrix2graph(m, None, None, multigraph=False)
 
 
 @pytest.fixture
@@ -44,7 +51,13 @@ def true_lowrank_mat(request):
         group_size=int(N / rank),
         group_number=rank,
         known_edge_percentage=known_edge_percentage)
-    return M
+    return sparse.csr_matrix(M)
+
+
+@pytest.fixture
+def true_lowrank_g(request):
+    m = true_lowrank_mat(request)
+    return matrix2graph(m, None, None, multigraph=False)
 
 
 def make_signed_matrix(N, friends, enemies):
@@ -70,6 +83,13 @@ def Q1():
 
 
 @pytest.fixture
+def g1():
+    """a simple signed matrix
+    """
+    return matrix2graph(sparse_Q1(), multigraph=False)
+
+
+@pytest.fixture
 def sparse_Q1():
     return sparse.csr_matrix(Q1())
 
@@ -83,6 +103,11 @@ def Q1_result():
     return exp
 
 
+@pytest.fixture
+def g1_result():
+    return matrix2graph(sparse.csr_matrix(Q1_result()), multigraph=False)
+
+    
 @pytest.fixture
 def Q1_d():
     """
@@ -108,18 +133,23 @@ def lowrank_graph(request):
 
     m = make_lowrank_matrix(group_size, rank)
     
-    g = nx.MultiGraph()  # allow parallel edges
+    g = nx.Graph()
     n_row, n_col = m.shape
     for i in range(n_row):
         for j in range(n_col):
-            s = m[i][j]
-            g.add_edge(i, j, key=s, weight=1, sign=s)
+            g.add_edge(i, j, weight=1, sign=m[i][j])
     return g
+
+
+@pytest.fixture
+def lowrank_multigraph(request):
+    return to_multigraph(lowrank_graph(request))
 
 
 @pytest.fixture
 def status_0(request):
     g = lowrank_graph(request)
     s = Status()
-    s.init(g)
+    s.init(to_multigraph(g))
     return s
+

@@ -33,22 +33,14 @@ def test_predict_signs_using_partition():
     C = [i for i in range(rank) for j in range(size)]
 
     # without targets
-    P = predict_signs_using_partition(C, targets=None)
-    assert isspmatrix_dok(P)
-
+    preds = predict_signs_using_partition(C, targets=None)
     true_P = make_lowrank_matrix(size, rank=rank) - np.eye(size * rank)
-    np.testing.assert_almost_equal(P.toarray(), true_P)
+    
+    assert set(preds) == set([(0, 1, 1), (2, 3, 1), (1, 2, -1), (0, 2, -1), (1, 3, -1), (0, 3, -1)])
 
     # with targets
-    P = predict_signs_using_partition(C, targets=[(0, 2), (2, 0)])
-    assert isspmatrix_dok(P)
-    
-    true_P = np.array([[0, 0, -1, 0],
-                       [0, 0, 0, 0],
-                       [-1, 0, 0, 0],
-                       [0, 0, 0, 0]])
-    
-    np.testing.assert_almost_equal(P.toarray(), true_P)
+    preds = predict_signs_using_partition(C, targets=[(0, 2)])
+    assert set(preds) == set([(0, 2, -1)])
 
 
 def test_split_train_dev_test(random_graph):

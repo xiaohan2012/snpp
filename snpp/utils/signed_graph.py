@@ -44,28 +44,45 @@ def symmetric_stat(m):
     return c1, c2
 
 
-def matrix2graph(A, W, multigraph=True):
+def matrix2graph(A, W=None, nodes=None, multigraph=True):
     """returns MultiGraph
     """
 
     idxs = tqdm(zip(*A.nonzero()))
+    if multigraph:
+        g = nx.MultiGraph()  # allow parallel edges
+    else:
+        g = nx.Graph()
 
+    if nodes:
+        g.add_nodes_from(nodes)
+        
     if multigraph:
         print('building MultiGraph')
-        g = nx.MultiGraph()  # allow parallel edges
         if W is None:
             for i, j in idxs:
-                g.add_edge(i, j, key=A[i, j], weight=1, sign=A[i, j])
+                g.add_edge(i, j, key=A[i, j], weight=1, sign=int(A[i, j]))
         else:
             for i, j in idxs:
-                g.add_edge(i, j, key=A[i, j], weight=W[i, j], sign=A[i, j])
+                g.add_edge(i, j, key=A[i, j], weight=W[i, j], sign=int(A[i, j]))
     else:
         print('building Graph')
-        g = nx.Graph()  # allow parallel edges
+
         if W is None:
-            g.add_edges_from((i, j, {'weight': 1, 'sign': A[i, j]})
+            g.add_edges_from((i, j, {'weight': 1, 'sign': int(A[i, j])})
                              for i, j in idxs)
         else:
-            g.add_edges_from((i, j, {'weight': W[i, j], 'sign': A[i, j]})
+            g.add_edges_from((i, j, {'weight': W[i, j], 'sign': int(A[i, j])})
                              for i, j in idxs)
     return g
+
+
+def to_multigraph(graph):
+    new_g = nx.MultiGraph()
+    new_g.add_nodes_from(graph.nodes_iter())
+    for i, j in graph.edges_iter():
+        s = graph[i][j]['sign']
+        new_g.add_edge(i, j,
+                       key=s, weight=graph[i][j].get('weight', 1),
+                       sign=s)
+    return new_g
