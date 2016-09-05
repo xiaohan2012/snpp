@@ -4,7 +4,8 @@ from scipy.sparse import dok_matrix
 from copy import copy
 
 from .triangle import first_order_triangles_count, \
-    first_order_triangles_count_g
+    first_order_triangles_count_g, \
+    first_order_triangles_net_count_g
 
 
 def edge_weight_sum(edges, W):
@@ -81,15 +82,15 @@ def greedy_g(g, C, B, T):
         if (budget_used >= B or len(targets) <= 0):
             break
         try:
-            n1, n2, s, c = max(first_order_triangles_count_g(g, C, targets),
-                               key=lambda tpl: tpl[-1])
+            n1, n2, s, nc, ck = max(first_order_triangles_net_count_g(g, C, targets),
+                                    key=lambda tpl: tpl[3])
         except ValueError:  # no first-order triangles
             print("WARN: empty first-order triangles. So exit loop")
             print('targets: {}'.format(targets))
             break
         
-        print('assigning {} to ({}, {}) produces {} more balanced triangles'.format(
-            s, n1, n2, c
+        print('assigning {} to ({}, {}) produces {} more balanced triangles {}'.format(
+            s, n1, n2, nc, ck
         ))
         
         T_p.add((n1, n2))

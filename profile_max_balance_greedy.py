@@ -1,12 +1,12 @@
+import networkx as nx
 import numpy as np
-from snpp.cores.max_balance import greedy
+from snpp.cores.max_balance import greedy_g
 from snpp.utils.matrix import load_sparse_csr
 
 
-train_m = load_sparse_csr('data/slashdot/train_sym.npz')
+g = nx.read_gpickle('data/slashdot/train_graph.pkl')
 test_m = load_sparse_csr('data/slashdot/test.npz')
-targets = set(zip(*test_m.nonzero()))
+targets = set([tuple(sorted(e))
+               for e in zip(*test_m.nonzero())])
 
-n, _ = train_m.shape
-print('what the...')
-greedy_g(train_m, None, C=np.ones(n), B=5, T=targets)
+greedy_g(g, C=np.ones(g.number_of_nodes()), B=5, T=targets)

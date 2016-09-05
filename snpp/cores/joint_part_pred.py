@@ -43,8 +43,13 @@ def iterative_approach(g, T, k,
     for i, j in T:
         assert i <= j
 
+    if truth:
+        for _, _, v in truth:
+            assert v != 0
+
     iter_n = 0
     all_predictions = []
+    acc_list = []
     while len(remaining_targets) > 0:
         iter_n += 1
         print('iteration={}, #remaining targets={}'.format(
@@ -68,15 +73,18 @@ def iterative_approach(g, T, k,
                          for i, j, s in predictions)
 
         if truth:
+            acc = len(truth.intersection(set(all_predictions))) / len(all_predictions)
             print('Accuracy on {} predictions is {}'.format(
-                len(all_predictions),
-                len(truth.intersection(set(all_predictions))) / len(all_predictions)
+                len(all_predictions), acc
             ))
+            acc_list.append(acc)
 
     C = graph_partition_f(g, k,
                           **graph_partition_kwargs)
-    return C, all_predictions
-
+    if truth:
+        return C, all_predictions, acc_list
+    else:
+        return C, all_predictions
 
 def single_run_approach(g, T, k,
                         graph_partition_f,

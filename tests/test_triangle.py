@@ -10,7 +10,8 @@ from snpp.cores.triangle import extract_nodes_and_signs, \
     in_different_partitions, \
     get_sign_1st_order, \
     first_order_triangles_count, \
-    first_order_triangles_count_g
+    first_order_triangles_count_g, \
+    first_order_triangles_net_count_g
 from snpp.utils.signed_graph import matrix2graph
 
 
@@ -24,10 +25,10 @@ def test_extract_nodes_and_signs():
     assert signs == [1, -1]
 
     # invalid case
-    e = (0, 3)
-    e1 = (1, 2, 1)
-    e2 = (0, 2, -1)
-    assert_raises(AssertionError, extract_nodes_and_signs, e, e1, e2)
+    # e = (0, 3)
+    # e1 = (1, 2, 1)
+    # e2 = (0, 2, -1)
+    # assert_raises(AssertionError, extract_nodes_and_signs, e, e1, e2)
 
 
 def test_in_different_partitions():
@@ -115,3 +116,22 @@ def test_first_order_triangles_count_g(g6):
                                           T=[(0, 1), (2, 3), (4, 5)])
     assert set(iters) == {(0, 1, -1, 2), (0, 1, 1, 1),
                           (2, 3, 1, 2), (4, 5, 1, 1)}
+
+def test_first_order_triangles_net_count_g(g6):
+    """pass nx.Graph as parameter
+    """
+    C1 = np.array(['a', 'b', 'b', 'c', 'd', 'x'])
+    C2 = np.array(['a', 'b', 'c', 'c', 'd', 'x'])
+    iters = first_order_triangles_net_count_g(g6, C1, T=[(0, 1)])
+
+    assert set(iters) == {(0, 1, 1, 1, (1, 2))}
+
+    iters = first_order_triangles_net_count_g(g6, C2, T=[(0, 1)])
+    assert set(iters) == {(0, 1, -1, 1, (2, 1))}
+
+    iters = first_order_triangles_net_count_g(
+        g6, C2,
+        T=[(0, 1), (2, 3), (4, 5)])
+    assert set(iters) == {(0, 1, -1, 1, (2, 1)),
+                          (2, 3, 1, 2, (0, 2)),
+                          (4, 5, 1, 1, (0, 1))}

@@ -22,8 +22,10 @@ def test_load_csv_as_sparse():
 
 def test_synthetic_data():
     n1, n2, p = 4, 5, 0.2
+    N = n1 * n2
     Q, _ = example_for_intuition(n1, n2, p)
     nnz = np.count_nonzero(Q)
-    assert (n1 * n2) ** 2 * p == (nnz - n1 * n2)
+    
+    assert N * (N - 1) / 2 * p == (nnz - N) / 2
     assert (Q == np.transpose(Q)).all()
 

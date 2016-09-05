@@ -79,7 +79,7 @@ if __name__ == "__main__":
     print('remaining #targets {}'.format(len(targets)))
 
     # start the iterative approach
-    A, P = iterative_approach(
+    A, P, acc = iterative_approach(
         g,
         T=targets,
         k=k,
@@ -90,7 +90,9 @@ if __name__ == "__main__":
         budget_allocation_f=exponential_budget,
         budget_allocation_kwargs=dict(exp_const=2),
         solve_maxbalance_f=greedy_g,
-        truth=set([(i, j, test_m[i, j])
+        truth=set([(i, j, (test_m[i, j]
+                           if test_m[i, j] != 0
+                           else test_m[j, i]))
                    for i, j in targets]))
 
     P_u = coo_matrix((data, (idx_i, idx_j)),

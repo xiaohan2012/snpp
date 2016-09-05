@@ -34,3 +34,8 @@ def exponential_budget(C, g, iter_n, exp_const=2):
     return exp_const ** iter_n
     
 
+def constant_then_exponential_budget(C, g, iter_n, const=50, exp_const=2, switch_iter=5):
+    if iter_n < switch_iter:
+        return const
+    else:
+        return exponential_budget(C, g, iter_n, exp_const=exp_const)
