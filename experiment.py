@@ -1,7 +1,7 @@
 from pyspark.sql import SparkSession
 
 import networkx as nx
-from scipy.sparse import coo_matrix
+from scipy.sparse import coo_matrix, dok_matrix
 import _pickle as pkl
 
 from snpp.cores.joint_part_pred import iterative_approach
@@ -16,6 +16,7 @@ from snpp.utils.matrix import load_sparse_csr, \
     save_sparse_csr, \
     split_train_test, \
     difference_ratio_sparse
+from snpp.utils.status import Status
 from snpp.utils.signed_graph import matrix2graph
 
 
@@ -80,11 +81,10 @@ if __name__ == "__main__":
     targets = set(zip(*test_m.nonzero())) - set(zip(idx_i, idx_j))
     # sort each edge so that i <= j
     targets = set([tuple(sorted(e)) for e in targets])
-
     print('remaining #targets {}'.format(len(targets)))
-
+    
     # start the iterative approach
-    A, P, acc = iterative_approach(
+    part, predictions, status = iterative_approach(
         g,
         T=targets,
         k=k,
@@ -104,13 +104,6 @@ if __name__ == "__main__":
 
     P_u = coo_matrix((data, (idx_i, idx_j)),
                      shape=test_m.shape).tocsr()
-    
     print('dumping result...')
-    pkl.dump(acc, open('data/{}/acc_list.pkl'.format(dataset), 'wb'))
-    save_sparse_csr(P + P_u, 'data/{}/predictions_total')
-    save_sparse_csr(P.tocsr(), 'data/{}/predictions_P')
-
-    error_rate = difference_ratio_sparse(test_m, P + P_u)
-    print("accuracy {}".format(1 - error_rate))
-    
-
+    pkl.dump(status, open('data/{}/status.pkl'.format(dataset), 'wb'))
+    print('Prediction accuracy {}'.format(status.acc_list[-1]))

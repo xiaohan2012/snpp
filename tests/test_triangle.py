@@ -118,6 +118,7 @@ def test_first_order_triangles_count_g(g6):
     assert set(iters) == {(0, 1, -1, 2), (0, 1, 1, 1),
                           (2, 3, 1, 2), (4, 5, 1, 1)}
 
+
 def test_first_order_triangles_net_count_g(g6):
     """pass nx.Graph as parameter
     """
@@ -125,17 +126,17 @@ def test_first_order_triangles_net_count_g(g6):
     C2 = np.array(['a', 'b', 'c', 'c', 'd', 'x'])
     iters = first_order_triangles_net_count_g(g6, C1, T=[(0, 1)])
 
-    assert set(iters) == {(0, 1, 1, 1, (1, 2))}
+    assert set(iters) == {(0, 1, 1, 1, (1, 2), (('s+1', 2), ('w-1', 1)))}
 
     iters = first_order_triangles_net_count_g(g6, C2, T=[(0, 1)])
-    assert set(iters) == {(0, 1, -1, 1, (2, 1))}
+    assert set(iters) == {(0, 1, -1, 1, (2, 1), (('w-1', 2), ('s+1', 1)))}
 
     iters = first_order_triangles_net_count_g(
         g6, C2,
         T=[(0, 1), (2, 3), (4, 5)])
-    assert set(iters) == {(0, 1, -1, 1, (2, 1)),
-                          (2, 3, 1, 2, (0, 2)),
-                          (4, 5, 1, 1, (0, 1))}
+    assert set(iters) == {(0, 1, -1, 1, (2, 1), (('w-1', 2), ('s+1', 1))),
+                          (2, 3, 1, 2, (0, 2), tuple({'s+1': 2}.items())),
+                          (4, 5, 1, 1, (0, 1), tuple({'s+1': 1}.items()))}
 
 
     

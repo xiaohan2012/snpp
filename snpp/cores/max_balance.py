@@ -56,7 +56,7 @@ def greedy(A, W, C, B, T):
         P[n1, n2] = s
     return P.tocsr()
 
-
+# DEPRECATED
 def greedy_g(g, C, B, T):
     """
     Args:
@@ -129,8 +129,8 @@ def faster_greedy(g, C, B, T, edge2edges=None):
 
     print('building triangle_count_by_edge')
     triangle_count_by_edge = {}  # needs to be updated on the fly
-    for n1, n2, s, sc, ck in first_order_triangles_net_count_g(g, C, targets):
-        triangle_count_by_edge[(n1, n2)] = (s, sc, ck)
+    for n1, n2, s, sc, ck, info in first_order_triangles_net_count_g(g, C, targets):
+        triangle_count_by_edge[(n1, n2)] = (s, sc, ck, info)
 
     if edge2edges is None:
         g = g.copy()
@@ -148,10 +148,10 @@ def faster_greedy(g, C, B, T, edge2edges=None):
         # can use a heap here
         best_e = max(targets,
                      key=lambda k: triangle_count_by_edge[k][1])
-        best_s, nc, ck = triangle_count_by_edge[best_e]
+        best_s, nc, ck, info = triangle_count_by_edge[best_e]
 
-        print('assigning {} to {} produces {} more balanced triangles {}'.format(
-            best_s, best_e, nc, ck
+        print('assigning {} to {} produces {} more balanced triangles {}: {}'.format(
+            best_s, best_e, nc, ck, info
         ))
 
         # update triangle information on affected edges
@@ -159,8 +159,8 @@ def faster_greedy(g, C, B, T, edge2edges=None):
         affected_edges = list(filter(lambda e: e not in T_p,
                                      edge2edges[(n1, n2)]))
         
-        for i, j, s, nc, ck in first_order_triangles_net_count_g(g, C, affected_edges):
-            triangle_count_by_edge[(i, j)] = (s, nc, ck)
+        for i, j, s, nc, ck, info in first_order_triangles_net_count_g(g, C, affected_edges):
+            triangle_count_by_edge[(i, j)] = (s, nc, ck, info)
 
         # gather result
         T_p.add(best_e)

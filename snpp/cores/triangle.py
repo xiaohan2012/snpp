@@ -26,18 +26,27 @@ def in_different_partitions(nodes, C):
 NEG11 = [-1, -1]
 
 
-def get_sign_1st_order(e, e1, e2, C):
+def get_sign_1st_order(e, e1, e2, C, return_type=False):
     nodes, signs = extract_nodes_and_signs(e, e1, e2)
     if len(set(C[n] for n in nodes)) == 3 and signs == NEG11:
         # weak balance
-        return -1
+        if return_type:
+            return -1, 'w'
+        else:
+            return -1
     else:
         # strong balance
         neg_cnt = len(list(filter(lambda s: s == -1, signs)))
         if neg_cnt % 2 == 0:
-            return 1
+            if return_type:
+                return 1, 's'
+            else:
+                return 1
         else:
-            return -1
+            if return_type:
+                return -1, 's'
+            else:
+                return -1
 
 
 def first_order_triangles_count(A, C, T):
@@ -124,6 +133,7 @@ def first_order_triangles_net_count_g(g, C, T):
 
     for ni, nj in T:
         count_by_sign = np.zeros(2, dtype=np.int)  # pos 0 for -1, pos 1 for 1
+        count_by_type = defaultdict(int)
         e = (ni, nj)
         nbi = set(g.adj[ni])
         nbj = set(g.adj[nj])
@@ -131,12 +141,15 @@ def first_order_triangles_net_count_g(g, C, T):
         for nk in nks:
             e1 = (ni, nk, g[ni][nk]['sign'])
             e2 = (nj, nk, g[nj][nk]['sign'])
-            correct_sign = get_sign_1st_order(e, e1, e2, C)
+            correct_sign, balance_type = get_sign_1st_order(e, e1, e2, C,
+                                                            return_type=True)
             if correct_sign == -1:
                 pos = 0
             else:
                 pos = 1
             count_by_sign[pos] += 1
+            type_str = '{}{:+d}'.format(balance_type, correct_sign)
+            count_by_type[type_str] += 1
             
         ind = np.argmax(count_by_sign)
         net_count = abs(count_by_sign[0] - count_by_sign[1])
@@ -144,7 +157,9 @@ def first_order_triangles_net_count_g(g, C, T):
             sign = -1
         else:
             sign = 1
-        yield (ni, nj, sign, net_count, tuple(count_by_sign))
+        yield (ni, nj, sign, net_count,
+               tuple(count_by_sign),
+               tuple(sorted(count_by_type.items(), key=lambda t: t[1], reverse=True)))
 
             
 def build_edge2edges(g, T):

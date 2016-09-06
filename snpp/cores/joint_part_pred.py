@@ -6,6 +6,7 @@ from copy import copy
 from scipy.sparse import csr_matrix
 from snpp.utils import nonzero_edges, predict_signs_using_partition
 from snpp.utils.signed_graph import matrix2graph
+from snpp.utils.status import Status
 
 
 def iterative_approach(g, T, k,
@@ -35,6 +36,7 @@ def iterative_approach(g, T, k,
     
     C: partition, partition label array, 1xn
     predictions: list of (i, j, sign)
+    status:
     """
     T = set(T)
     remaining_targets = copy(T)
@@ -46,10 +48,11 @@ def iterative_approach(g, T, k,
     if truth:
         for _, _, v in truth:
             assert v != 0
+        status = Status()
 
     iter_n = 0
     all_predictions = []
-    acc_list = []
+
     while len(remaining_targets) > 0:
         iter_n += 1
         print('iteration={}, #remaining targets={}'.format(
@@ -58,9 +61,7 @@ def iterative_approach(g, T, k,
         print("graph partitioning...")
         C = graph_partition_f(g, k,
                               **graph_partition_kwargs)
-        print('cluster:')
-        print(C)
-
+        
         B = budget_allocation_f(C, g, iter_n, **budget_allocation_kwargs)
         
         print("solving max_balance")
@@ -69,21 +70,20 @@ def iterative_approach(g, T, k,
 
         all_predictions += predictions
         remaining_targets -= set((i, j) for i, j, _ in predictions)
-        print(predictions)
         g.add_edges_from((i, j, {'weight': 1, 'sign': s})
                          for i, j, s in predictions)
-
+                
         if truth:
             acc = len(truth.intersection(set(all_predictions))) / len(all_predictions)
             print('Accuracy on {} predictions is {}'.format(
                 len(all_predictions), acc
             ))
-            acc_list.append(acc)
+            status.update(predictions, acc, C)
 
     C = graph_partition_f(g, k,
                           **graph_partition_kwargs)
     if truth:
-        return C, all_predictions, acc_list
+        return C, all_predictions, status
     else:
         return C, all_predictions
 
