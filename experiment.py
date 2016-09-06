@@ -8,7 +8,8 @@ from snpp.cores.joint_part_pred import iterative_approach
 from snpp.cores.max_balance import faster_greedy
 from snpp.cores.lowrank import partition_graph
 from snpp.cores.budget_allocation import exponential_budget, \
-    constant_then_exponential_budget
+    constant_then_exponential_budget, \
+    linear_budget
 from snpp.cores.louvain import best_partition
 from snpp.cores.triangle import build_edge2edges
 from snpp.utils.matrix import load_sparse_csr, \
@@ -91,8 +92,8 @@ if __name__ == "__main__":
         graph_partition_kwargs=dict(sc=spark_context,
                                     lambda_=lambda_, iterations=max_iter,
                                     seed=random_seed),
-        budget_allocation_f=constant_then_exponential_budget,
-        budget_allocation_kwargs=dict(const=50, exp_const=2, switch_iter=4),
+        budget_allocation_f=linear_budget,
+        budget_allocation_kwargs=dict(linear_const=100),
         solve_maxbalance_f=faster_greedy,
         solve_maxbalance_kwargs={'edge2edges': build_edge2edges(g.copy(),
                                                                 targets)},

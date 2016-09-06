@@ -102,11 +102,7 @@ def greedy_g(g, C, B, T):
         preds.append((n1, n2, s))
     return preds
 
-<<<<<<< HEAD
 
-=======
-# @profile
->>>>>>> 0416df45d125044e0ba0b2290558189133d6ccd3
 def faster_greedy(g, C, B, T, edge2edges=None):
     """
     Faster version that computes the triangle count only when necessary

@@ -1,5 +1,3 @@
-
-
 def max_budget(C, g, iter_n,
                total_budget=None):
     """
