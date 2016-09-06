@@ -62,7 +62,7 @@ def first_order_triangles_count(A, C, T):
     for n in nodes:
         nonzero_d[n] = set(A[n, :].nonzero()[1])
 
-    for ni, nj in T:
+    for ni, nj in tqdm(T):
         idx1 = nonzero_d[ni]
         idx2 = nonzero_d[nj]
 
@@ -93,7 +93,7 @@ def first_order_triangles_count_g(g, C, T):
     """
     assert isinstance(g, nx.Graph)
 
-    for ni, nj in tqdm(T):
+    for ni, nj in T:
         counter_by_sign = Counter()
         e = (ni, nj)
         nks = set(g.adj[ni]).intersection(set(g.adj[nj])) - {ni, nj}
@@ -122,7 +122,7 @@ def first_order_triangles_net_count_g(g, C, T):
     """
     assert isinstance(g, nx.Graph)
 
-    for ni, nj in tqdm(T):
+    for ni, nj in T:
         count_by_sign = np.zeros(2, dtype=np.int)  # pos 0 for -1, pos 1 for 1
         e = (ni, nj)
         nbi = set(g.adj[ni])
