@@ -151,7 +151,7 @@ def faster_greedy(g, C, B, T, edge2edges=None):
         best_s, nc, ck = triangle_count_by_edge[best_e]
 
         print('assigning {} to {} produces {} more balanced triangles {}'.format(
-            s, best_e, nc, ck
+            best_s, best_e, nc, ck
         ))
 
         # update triangle information on affected edges

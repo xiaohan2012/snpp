@@ -39,7 +39,7 @@ def predict_cluster_labels_svd(M, k, order):
     else:
         X = U[:, -k:]
     
-    model = KMeans(n_clusters=k)
+    model = KMeans(n_clusters=k, n_jobs=-1)
     pred_y = model.fit_predict(X)
     return model, pred_y
 

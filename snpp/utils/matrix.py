@@ -1,5 +1,5 @@
 import numpy as np
-from scipy.sparse import csr_matrix, issparse, dok_matrix
+from scipy.sparse import csr_matrix, issparse, dok_matrix, isspmatrix_dok
 from sklearn.cross_validation import train_test_split
 
 
@@ -10,8 +10,10 @@ def indexed_entries(sparse_matrix):
     Return:
     list of (row_id, col_id, value)
     """
-    return [(i, j, sparse_matrix[i, j])
-            for i, j in zip(*sparse_matrix.nonzero())]
+    if not isspmatrix_dok(sparse_matrix):
+        sparse_matrix = sparse_matrix.todok()
+    return ((i, j, sparse_matrix[i, j])
+            for i, j in zip(*sparse_matrix.nonzero()))
 
 
 def zero(m):

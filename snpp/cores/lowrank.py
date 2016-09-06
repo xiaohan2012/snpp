@@ -85,10 +85,7 @@ def alq_spark(A, k, sc, **kwargs):
     X: np.ndarray (n x k)
     Y: np.ndarray (k x n)
     """
-    edges = indexed_entries(A)
-    
-    # import _pickle as pkl
-    # pkl.dump(edges, open('data/slashdot/train_edges.pkl', 'wb'))
+    edges = indexed_entries(A)    
     
     edges_rdd = sc.parallelize(edges)
     model = ALS.train(edges_rdd, rank=k, **kwargs)
