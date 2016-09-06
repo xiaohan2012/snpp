@@ -129,6 +129,24 @@ def partition_sparse(A, k, sc, **kwargs):
     return labels
 
 
+def partition_graph_slow(g, k, sc, **kwargs):
+    """
+    Args:
+
+    - A: sparse matrix
+    - sc: spark context
+
+    Return:
+
+    - cluster labels
+    """
+    A = nx.to_scipy_sparse_matrix(g, nodelist=g.nodes(),
+                                  weight='sign', format='csr')
+    A = fill_diagonal(A)
+    print(A.toarray())
+    return partition_sparse(A, k, sc, **kwargs)
+
+
 def partition_graph(g, k, sc, **kwargs):
     """takes graph as input
     """
@@ -136,7 +154,6 @@ def partition_graph(g, k, sc, **kwargs):
     A = nx.to_scipy_sparse_matrix(g, nodelist=g.nodes(),
                                   weight='sign', format='csr')
     A = fill_diagonal(A)
-    assert A[0, 0] == 1
     
     print('ALS...')
     U, _ = alq_spark(A, k, sc, **kwargs)

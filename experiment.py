@@ -2,11 +2,14 @@ from pyspark.sql import SparkSession
 
 import networkx as nx
 from scipy.sparse import coo_matrix
+import _pickle as pkl
+
 from snpp.cores.joint_part_pred import iterative_approach
-from snpp.cores.max_balance import greedy_g
+from snpp.cores.max_balance import faster_greedy
 from snpp.cores.lowrank import partition_graph
 from snpp.cores.budget_allocation import exponential_budget
 from snpp.cores.louvain import best_partition
+from snpp.cores.triangle import build_edge2edges
 from snpp.utils.matrix import load_sparse_csr, \
     save_sparse_csr, \
     split_train_test, \
@@ -89,7 +92,9 @@ if __name__ == "__main__":
                                     seed=random_seed),
         budget_allocation_f=exponential_budget,
         budget_allocation_kwargs=dict(exp_const=2),
-        solve_maxbalance_f=greedy_g,
+        solve_maxbalance_f=faster_greedy,
+        solve_maxbalance_kwargs={'edge2edges': build_edge2edges(g.copy(),
+                                                                targets)},
         truth=set([(i, j, (test_m[i, j]
                            if test_m[i, j] != 0
                            else test_m[j, i]))
@@ -97,5 +102,13 @@ if __name__ == "__main__":
 
     P_u = coo_matrix((data, (idx_i, idx_j)),
                      shape=test_m.shape).tocsr()
+    
+    print('dumping result...')
+    pkl.dump(acc, open('data/{}/acc_list.pkl'.format(dataset), 'wb'))
+    save_sparse_csr(P + P_u, 'data/{}/predictions_total')
+    save_sparse_csr(P.tocsr(), 'data/{}/predictions_P')
+
     error_rate = difference_ratio_sparse(test_m, P + P_u)
     print("accuracy {}".format(1 - error_rate))
+    
+
