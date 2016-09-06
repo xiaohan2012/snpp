@@ -8,10 +8,12 @@ from scipy.sparse import csr_matrix, isspmatrix_csr
 from sklearn.metrics import adjusted_rand_score
 
 from numpy.testing import assert_almost_equal, assert_allclose
-from snpp.cores.lowrank import partition_graph
+from snpp.cores.lowrank import partition_graph, \
+    partition_graph_slow
 from snpp.cores.budget_allocation import exponential_budget
-from snpp.cores.max_balance import greedy_g
+from snpp.cores.max_balance import faster_greedy
 from snpp.cores.louvain import best_partition
+from snpp.cores.triangle import build_edge2edges
 from snpp.utils.matrix import zero, difference_ratio
 from contexts import spark_context
 
@@ -34,7 +36,7 @@ def parameters(rand_lowrank_g):
     zeros = set(zip(*zero(nx.to_scipy_sparse_matrix(g, weight='sign'))))
     T = set()
     for i, j in zeros:
-        e = ((i, j) if i < j else (j, i))
+        e = tuple(sorted([i, j]))
         if e not in T:
             T.add(e)
     k = 3
@@ -62,7 +64,8 @@ def test_iterative_approach(rand_lowrank_g,
                                     seed=random_seed),
         budget_allocation_f=exponential_budget,
         budget_allocation_kwargs=dict(exp_const=2),
-        solve_maxbalance_f=greedy_g)
+        solve_maxbalance_f=faster_greedy,
+        solve_maxbalance_kwargs={'edge2edges': build_edge2edges(g.copy(), T)})
     assert_allclose(get_accuracy(true_lowrank_g, preds),
                     1.0)
 
@@ -78,10 +81,10 @@ def test_iterative_approach_louvain(rand_lowrank_g,
         graph_partition_f=best_partition,
         budget_allocation_f=exponential_budget,
         budget_allocation_kwargs=dict(exp_const=2),
-        solve_maxbalance_f=greedy_g)
+        solve_maxbalance_f=faster_greedy)
 
     assert_allclose(get_accuracy(true_lowrank_g, preds),
-                    0.675)
+                    0.675)  # should be consistent!
 
     
 def test_single_run_approach(rand_lowrank_g,

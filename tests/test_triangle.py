@@ -11,7 +11,8 @@ from snpp.cores.triangle import extract_nodes_and_signs, \
     get_sign_1st_order, \
     first_order_triangles_count, \
     first_order_triangles_count_g, \
-    first_order_triangles_net_count_g
+    first_order_triangles_net_count_g, \
+    build_edge2edges
 from snpp.utils.signed_graph import matrix2graph
 
 
@@ -135,3 +136,13 @@ def test_first_order_triangles_net_count_g(g6):
     assert set(iters) == {(0, 1, -1, 1, (2, 1)),
                           (2, 3, 1, 2, (0, 2)),
                           (4, 5, 1, 1, (0, 1))}
+
+
+    
+def test_build_edge2edges(g6):
+    e2es = build_edge2edges(g6, T={(0, 1), (1, 5), (2, 5), (2, 3), (3, 5)})
+    assert dict(e2es) == {(0, 1): {(1, 5)},
+                          (1, 5): {(0, 1), (3, 5), (2, 5)},
+                          (2, 5): {(1, 5), (2, 3), (3, 5)},
+                          (2, 3): {(2, 5), (3, 5)},
+                          (3, 5): {(1, 5), (2, 3), (2, 5)}}

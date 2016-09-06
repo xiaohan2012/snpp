@@ -4,6 +4,7 @@ import numpy as np
 from scipy.sparse import isspmatrix_csr
 
 from snpp.cores.max_balance import greedy, greedy_g, \
+    faster_greedy, \
     edge_weight_sum
 from test_triangle import A6, g6
 
@@ -59,3 +60,31 @@ def test_greedy_g_3(g6):
     preds = greedy_g(g6, C, B=100, T=targets)
     assert preds == [(0, 1, -1), (4, 5, 1)]
     assert not g6.has_edge(4, 5)
+
+
+# faster_greedy
+def test_faster_greedy_1(g6):
+    preds = faster_greedy(g6, C, B=1, T=targets)
+    assert preds == [(0, 1, -1)]
+    assert not g6.has_edge(0, 1)
+
+
+def test_faster_greedy_2(g6): 
+    preds = faster_greedy(g6, C, B=2, T=targets)
+    assert preds == [(0, 1, -1), (4, 5, 1)]
+    assert not g6.has_edge(4, 5)  # no side effect
+
+
+def test_faster_greedy_3(g6):
+    preds = faster_greedy(g6, C, B=100, T=targets)
+    assert preds == [(0, 1, -1), (4, 5, 1)]
+    assert not g6.has_edge(4, 5)
+
+
+def test_faster_greedy_4(g6):
+    preds = faster_greedy(g6, C, B=10,
+                          T={(0, 1), (1, 5), (2, 5), (2, 3), (3, 5)})
+    assert preds == [(2, 3, 1), (0, 1, -1), (2, 5, -1), (1, 5, -1), (3, 5, -1)]
+    assert not g6.has_edge(4, 5)
+    assert not g6.has_edge(0, 1)
+    

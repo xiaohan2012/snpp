@@ -3,7 +3,7 @@ import numpy as np
 
 from tqdm import tqdm
 from scipy.sparse import isspmatrix_csr
-from collections import Counter
+from collections import Counter, defaultdict
 
 
 def extract_nodes_and_signs(e, e1, e2):
@@ -147,3 +147,28 @@ def first_order_triangles_net_count_g(g, C, T):
         yield (ni, nj, sign, net_count, tuple(count_by_sign))
 
             
+def build_edge2edges(g, T):
+    """
+    g: Graph
+    T: target edges
+    """
+    assert isinstance(T, set)
+    g = g.copy()
+    g.add_edges_from(T)
+    
+    e2es = defaultdict(set)
+
+    print('build edge2edges')
+    for ni, nj in tqdm(T):
+        e = (ni, nj)
+        nbi = set(g.adj[ni])
+        nbj = set(g.adj[nj])
+        nks = nbi.intersection(nbj) - {ni, nj}
+        for nk in nks:
+            e1 = tuple(sorted([ni, nk]))
+            e2 = tuple(sorted([nj, nk]))
+            if e1 in T:
+                e2es[e].add(e1)
+            if e2 in T:
+                e2es[e].add(e2)
+    return e2es

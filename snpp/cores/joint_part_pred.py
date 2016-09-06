@@ -69,6 +69,7 @@ def iterative_approach(g, T, k,
 
         all_predictions += predictions
         remaining_targets -= set((i, j) for i, j, _ in predictions)
+        print(predictions)
         g.add_edges_from((i, j, {'weight': 1, 'sign': s})
                          for i, j, s in predictions)
 
@@ -85,6 +86,7 @@ def iterative_approach(g, T, k,
         return C, all_predictions, acc_list
     else:
         return C, all_predictions
+
 
 def single_run_approach(g, T, k,
                         graph_partition_f,
