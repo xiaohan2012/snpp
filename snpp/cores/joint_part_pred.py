@@ -21,7 +21,7 @@ def iterative_approach(g, T, k,
     """
     Params:
     
-    g: networkx.Graph
+    g: networkx.Graph (**mutable**)
     T: target edge set (set of edges, (i, j))
        the i, j order doesn't matter because it's undirected
     k: partition number

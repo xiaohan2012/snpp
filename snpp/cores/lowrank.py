@@ -161,3 +161,12 @@ def partition_graph(g, k, sc, **kwargs):
     _, labels = predict_cluster_labels_svd(U, k, order='desc')
 
     return labels
+
+
+def predict_signs(X, Y, targets, sc):
+    Xb, Yb = sc.broadcast(X), sc.broadcast(np.transpose(Y))
+    preds = sc.parallelize(targets).map(
+        lambda e: (e[0], e[1], np.sign(np.dot(Xb.value[e[0]], Yb.value[e[1]])))
+        
+    ).collect()
+    return preds
