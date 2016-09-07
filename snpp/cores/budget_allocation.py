@@ -37,3 +37,7 @@ def constant_then_exponential_budget(C, g, iter_n, const=50, exp_const=2, switch
         return const
     else:
         return exponential_budget(C, g, iter_n, exp_const=exp_const)
+
+
+def constant_budget(C, g, iter_n, const=100):
+    return const

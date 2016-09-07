@@ -9,7 +9,6 @@ from snpp.utils.signed_graph import symmetric_stat, \
     fill_diagonal, \
     make_symmetric, \
     matrix2graph
-from data import Q1_d
 
 
 def test_symmetric_stat(Q1_d):

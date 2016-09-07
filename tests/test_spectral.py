@@ -9,9 +9,6 @@ from snpp.cores.spectral import predict_cluster_labels, predict_cluster_labels_s
 from sklearn.metrics import adjusted_rand_score
 
 
-from data import Q1
-
-
 def test_sparse(Q1):
     L = build_L(Q1)
     L_sp = csr_matrix(L)

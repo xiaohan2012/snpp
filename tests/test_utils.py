@@ -12,7 +12,6 @@ from snpp.utils.matrix import zero, \
     difference_ratio, \
     difference_ratio_sparse, \
     delete_csr_entries
-from data import random_graph, sparse_Q1, Q1_d
 
 
 def test_zeros():

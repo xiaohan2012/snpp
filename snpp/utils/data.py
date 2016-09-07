@@ -4,7 +4,13 @@ import numpy as np
 import networkx as nx
 
 from scipy.sparse import dok_matrix
-from itertools import combinations, product
+
+from snpp.utils.matrix import load_sparse_csr, \
+    save_sparse_csr, \
+    split_train_test
+from snpp.utils.signed_graph import matrix2graph
+    
+from itertools import combinations
 
 
 def load_csv_network(path):
@@ -75,3 +81,44 @@ def example_for_intuition(group_size, group_number, known_edge_percentage):
 def make_lowrank_matrix(g_size, rank):
     _, M = example_for_intuition(g_size, rank, 0.0)
     return M
+
+
+def load_train_test_data(dataset, recache_input):
+    raw_mat_path = 'data/{}.npz'.format(dataset)
+    train_graph_path = 'data/{}/train_graph.pkl'.format(dataset)
+    test_data_path = 'data/{}/test'.format(dataset)
+
+    if recache_input:
+        print('loading sparse matrix from {}'.format(raw_mat_path))
+        m = load_sparse_csr(raw_mat_path)
+
+        print('splitting train and test...')
+        train_m, test_m = split_train_test(
+            m,
+            weights=[0.9, 0.1])
+
+        nodes = list(range(m.shape[0]))
+        print('converting to nx.Graph')
+        g = matrix2graph(train_m, W=None,
+                         nodes=nodes, multigraph=False)
+                
+        print('saving training graph and test data...')
+        nx.write_gpickle(g, train_graph_path)
+        save_sparse_csr(test_data_path, test_m)
+    else:
+        print('loading pre-split train and test matrix...')
+        g = nx.read_gpickle(train_graph_path)
+        test_m = load_sparse_csr(test_data_path + '.npz')
+    return g, test_m
+
+
+def make_signed_matrix(N, friends, enemies):
+    Q = np.zeros((N, N))
+    for i, j in friends:
+        Q[i-1, j-1] = Q[j-1, i-1] = 1
+    for i, j in enemies:
+        Q[i-1, j-1] = Q[j-1, i-1] = -1
+    for i in range(N):
+        Q[i, i] = 1
+        
+    return Q

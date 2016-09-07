@@ -4,8 +4,7 @@ from scipy.sparse import csr_matrix
 
 from numpy.testing import assert_almost_equal
 
-
-from data import Q1, make_signed_matrix
+from snpp.utils.data import make_signed_matrix
 from snpp.cores.spectral import build_laplacian_related_matrices
 from snpp.cores.zheng2015 import build_L_sns as build_zheng2015
 from snpp.cores.kunegis2010 import build_L as build_kunegis2010

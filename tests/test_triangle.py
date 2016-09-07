@@ -65,27 +65,6 @@ def test_get_sign_1st_order():
     assert get_sign_1st_order(e, e1, e2, C2) == 1
 
 
-@pytest.fixture
-def A6():
-    A = np.zeros((6, 6))
-
-    for i in [2, 3]:
-        A[0, i] = A[i, 0] = A[1, i] = A[i, 1] = -1
-
-    for i in [4]:
-        A[0, i] = A[i, 0] = A[1, i] = A[i, 1] = 1
-
-    for i in [5]:  # not a triangle, ignore
-        A[0, i] = A[i, 0] = 1
-    
-    return csr_matrix(A)
-
-
-@pytest.fixture
-def g6():
-    return matrix2graph(A6(), None, multigraph=False)
-
-
 def test_first_order_triangles_count(A6):
     C1 = np.array(['a', 'b', 'b', 'c', 'd', 'x'])
     C2 = np.array(['a', 'b', 'c', 'c', 'd', 'x'])

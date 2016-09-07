@@ -15,13 +15,9 @@ from snpp.cores.max_balance import faster_greedy
 from snpp.cores.louvain import best_partition
 from snpp.cores.triangle import build_edge2edges
 from snpp.utils.matrix import zero, difference_ratio
-from contexts import spark_context
 
 from snpp.cores.joint_part_pred import iterative_approach, \
     single_run_approach
-
-from data import rand_lowrank_mat, true_lowrank_mat, \
-    rand_lowrank_g, true_lowrank_g
 
 
 N = 12

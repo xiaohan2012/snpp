@@ -76,7 +76,7 @@ def split_train_dev_test(m, weights=[0.8, 0.1, 0.1]):
 
     remain_sum = np.sum(weights[1:])
 
-    train, dev_test = train_test_split(entries, train_size=weights[0], test_size=remain_sum)
+    train, dev_test = train_test_split(list(entries), train_size=weights[0], test_size=remain_sum)
 
     dev, test = train_test_split(dev_test,
                                  train_size=weights[1] / remain_sum,
@@ -94,7 +94,7 @@ def split_train_test(m, weights=[0.9, 0.1]):
 
     entries = indexed_entries(m)
 
-    train, test = train_test_split(entries, train_size=weights[0], test_size=weights[1])
+    train, test = train_test_split(list(entries), train_size=weights[0], test_size=weights[1])
     return (_make_matrix(train, m.shape),
             _make_matrix(test, m.shape))
 

@@ -16,7 +16,8 @@ def iterative_approach(g, T, k,
                        graph_partition_kwargs={},
                        budget_allocation_kwargs={},
                        solve_maxbalance_kwargs={},
-                       truth=None):
+                       truth=None,
+                       perform_last_partition=True):
     """
     Params:
     
@@ -80,8 +81,9 @@ def iterative_approach(g, T, k,
             ))
             status.update(predictions, acc, C)
 
-    C = graph_partition_f(g, k,
-                          **graph_partition_kwargs)
+    if perform_last_partition:
+        C = graph_partition_f(g, k,
+                              **graph_partition_kwargs)
     if truth:
         return C, all_predictions, status
     else:

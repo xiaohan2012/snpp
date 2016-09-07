@@ -14,7 +14,7 @@ def make_symmetric(m):
     for i, j in tqdm(zip(*m.nonzero())):
         if m[j, i] == 0:
             entries_to_add.append((j, i, m[i, j]))
-    idx1, idx2, data = zip(*(indexed_entries(m) + entries_to_add))
+    idx1, idx2, data = zip(*(list(indexed_entries(m)) + entries_to_add))
     return csr_matrix((data, (idx1, idx2)), shape=m.shape)
 
 

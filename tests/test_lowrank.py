@@ -4,7 +4,6 @@ import pytest
 import numpy as np
 import networkx as nx
 
-from contexts import spark_context
 from numpy.testing import assert_almost_equal, assert_allclose
 from sklearn.metrics import adjusted_rand_score
 
@@ -12,10 +11,6 @@ from snpp.cores.lowrank import alq, alq_spark, \
     alq_weighted_spark, \
     partition_graph, \
     partition_sparse
-from snpp.utils.matrix import indexed_entries
-
-from data import Q1, sparse_Q1, Q1_result, rand_lowrank_mat,\
-    g1, g1_result, rand_lowrank_g
 
 
 random_seed = 123456
