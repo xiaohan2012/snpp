@@ -140,7 +140,7 @@ def faster_greedy(g, C, B, T, edge2edges=None):
         assert isinstance(edge2edges, dict)
 
     while True:
-        budget_used = sum(g[i][j]['weight'] for i, j in T_p)
+        budget_used = sum(g[i][j].get('weight', 1) for i, j in T_p)
         if (budget_used >= B or len(targets) <= 0):
             break
 

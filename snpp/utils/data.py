@@ -83,10 +83,10 @@ def make_lowrank_matrix(g_size, rank):
     return M
 
 
-def load_train_test_data(dataset, recache_input):
+def load_train_test_graphs(dataset, recache_input):
     raw_mat_path = 'data/{}.npz'.format(dataset)
     train_graph_path = 'data/{}/train_graph.pkl'.format(dataset)
-    test_data_path = 'data/{}/test'.format(dataset)
+    test_graph_path = 'data/{}/test_graph.pkl'.format(dataset)
 
     if recache_input:
         print('loading sparse matrix from {}'.format(raw_mat_path))
@@ -97,19 +97,18 @@ def load_train_test_data(dataset, recache_input):
             m,
             weights=[0.9, 0.1])
 
-        nodes = list(range(m.shape[0]))
-        print('converting to nx.Graph')
-        g = matrix2graph(train_m, W=None,
-                         nodes=nodes, multigraph=False)
+        print('converting to nx.DiGraph')
+        train_g = nx.from_scipy_sparse_matrix(train_m, create_using=nx.DiGraph(), edge_attribute='sign')
+        test_g = nx.from_scipy_sparse_matrix(test_m, create_using=nx.DiGraph(), edge_attribute='sign')
                 
-        print('saving training graph and test data...')
-        nx.write_gpickle(g, train_graph_path)
-        save_sparse_csr(test_data_path, test_m)
+        print('saving train and test graphs...')
+        nx.write_gpickle(train_g, train_graph_path)
+        nx.write_gpickle(test_g, test_graph_path)
     else:
-        print('loading pre-split train and test matrix...')
-        g = nx.read_gpickle(train_graph_path)
-        test_m = load_sparse_csr(test_data_path + '.npz')
-    return g, test_m
+        print('loading train and test graphs...')
+        train_g = nx.read_gpickle(train_graph_path)
+        test_g = nx.read_gpickle(test_graph_path)
+    return train_g, test_g
 
 
 def make_signed_matrix(N, friends, enemies):

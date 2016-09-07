@@ -42,10 +42,6 @@ def iterative_approach(g, T, k,
     T = set(T)
     remaining_targets = copy(T)
 
-    # data format checking
-    for i, j in T:
-        assert i <= j
-
     if truth:
         for _, _, v in truth:
             assert v != 0

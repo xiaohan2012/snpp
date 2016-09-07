@@ -90,7 +90,7 @@ part, iter_preds, status = iterative_approach(
                                 lambda_=lambda_, iterations=max_iter,
                                 seed=random_seed),
     budget_allocation_f=constant_budget,
-    budget_allocation_kwargs=dict(const=200),
+    budget_allocation_kwargs=dict(const=50),
     solve_maxbalance_f=faster_greedy,
     solve_maxbalance_kwargs={'edge2edges': build_edge2edges(g.copy(),
                                                             targets)},

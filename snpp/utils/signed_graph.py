@@ -86,3 +86,9 @@ def to_multigraph(graph):
                        key=s, weight=graph[i][j].get('weight', 1),
                        sign=s)
     return new_g
+
+
+def g2m(g):
+    m = nx.to_scipy_sparse_matrix(g, weight='sign', format='csr')
+    return fill_diagonal(m)
+    
