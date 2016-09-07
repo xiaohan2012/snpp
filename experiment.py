@@ -30,14 +30,14 @@ random_seed = 123456
 
 recache_input = False
 
-min_tri_count = 10
+min_tri_count = 20
 
 
 # In[ ]:
 
 g, test_m = load_train_test_data(dataset, recache_input)
 
-test_idx_sorted = list(map(lambda e: tuple(sorted(e)), zip(*test_m.nonzero())))                                                                                                                                 
+test_idx_sorted = list(map(lambda e: tuple(sorted(e)), zip(*test_m.nonzero())))
 
 
 # In[ ]:
