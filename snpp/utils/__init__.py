@@ -31,9 +31,7 @@ def predict_signs_using_partition(C, targets=None):
             s = 1
         else:
             s = -1
-        if i > j:
-            i, j = j, i
-        preds.append((i, j, s))            
+        preds.append((i, j, s))
     return preds
 
 
