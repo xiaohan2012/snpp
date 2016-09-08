@@ -1,7 +1,8 @@
 import numpy as np
 import scipy
-from scipy.sparse import  issparse
+from scipy.sparse import issparse, dia_matrix
 from sklearn.cluster import KMeans
+from ..utils.matrix import indexed_entries, _make_matrix
 
 
 def build_laplacian_related_matrices(W):
@@ -18,10 +19,15 @@ def build_laplacian_related_matrices(W):
 def build_laplacian_related_matrices_sparse(W):
     """W: the sign matrix (sparse)
     """
-    W_p = np.maximum(W, 0)
-    W_n = - np.minimum(W, 0)
-    D_p = np.diag(np.sum(W_p, axis=1))
-    D_n = np.diag(np.sum(W_n, axis=1))
+    assert issparse(W)
+
+    entries = list(indexed_entries(W))
+    W_p = _make_matrix(list(filter(lambda e: e[2] > 0, entries)), W.shape)
+    W_n = _make_matrix(list(filter(lambda e: e[2] < 0, entries)), W.shape)
+    W_n = -W_n
+
+    D_p = dia_matrix((np.transpose(W_p.sum(axis=1)), [0]), W.shape)
+    D_n = dia_matrix((np.transpose(W_n.sum(axis=1)), [0]), W.shape)
     D_hat = D_p + D_n
     return W_p, W_n, D_p, D_n, D_hat
 
