@@ -43,8 +43,11 @@ def iterative_approach(g, T, k,
     remaining_targets = copy(T)
 
     if truth:
-        for _, _, v in truth:
+        edge2true_sign = {}
+        for n1, n2, v in truth:
             assert v != 0
+            edge2true_sign[(n1, n2)] = v
+        solve_maxbalance_kwargs['edge2true_sign'] = edge2true_sign
         status = Status()
 
     iter_n = 0

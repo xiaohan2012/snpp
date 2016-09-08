@@ -1,5 +1,5 @@
 def max_budget(C, g, iter_n,
-               total_budget=None):
+               total_budget=None, **kwargs):
     """
     Args:
     
@@ -16,7 +16,7 @@ def max_budget(C, g, iter_n,
     return total_budget
     
 
-def linear_budget(C, g, iter_n, linear_const=1):
+def linear_budget(C, g, iter_n, linear_const=1, **kwargs):
     """
     budget = iter_n x constant
     """
@@ -24,7 +24,7 @@ def linear_budget(C, g, iter_n, linear_const=1):
     return iter_n * linear_const
 
 
-def exponential_budget(C, g, iter_n, exp_const=2):
+def exponential_budget(C, g, iter_n, exp_const=2, **kwargs):
     """
     budget = exp_const ^ iter_n
     """
@@ -32,12 +32,12 @@ def exponential_budget(C, g, iter_n, exp_const=2):
     return exp_const ** iter_n
     
 
-def constant_then_exponential_budget(C, g, iter_n, const=50, exp_const=2, switch_iter=5):
+def constant_then_exponential_budget(C, g, iter_n, const=50, exp_const=2, switch_iter=5, **kwargs):
     if iter_n < switch_iter:
         return const
     else:
-        return exponential_budget(C, g, iter_n, exp_const=exp_const)
+        return exponential_budget(C, g, iter_n, exp_const=exp_const, **kwargs)
 
 
-def constant_budget(C, g, iter_n, const=100):
+def constant_budget(C, g, iter_n, const=100, **kwargs):
     return const

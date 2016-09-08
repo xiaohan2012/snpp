@@ -2,7 +2,8 @@ import contexts as ctx
 from snpp.cores.budget_allocation import max_budget, \
     linear_budget, \
     exponential_budget, \
-    constant_then_exponential_budget
+    constant_then_exponential_budget, \
+    constant_budget
 
 default_args = {k: None
                 for k in ('C', 'g')}
@@ -34,3 +35,8 @@ def test_constant_then_exponential_budget():
     assert b == 64
     b = constant_then_exponential_budget(iter_n=7, const=50, exp_const=2, switch_iter=6, **default_args)
     assert b == 128
+
+
+def test_constant_const_budget():
+    assert constant_budget(None, None, None, const=100, edge2true_sign=None) == 100
+

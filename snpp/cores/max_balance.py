@@ -103,7 +103,7 @@ def greedy_g(g, C, B, T):
     return preds
 
 
-def faster_greedy(g, C, B, T, edge2edges=None):
+def faster_greedy(g, C, B, T, edge2edges=None, edge2true_sign=None):
     """
     Faster version that computes the triangle count only when necessary
 
@@ -150,8 +150,14 @@ def faster_greedy(g, C, B, T, edge2edges=None):
                      key=lambda k: triangle_count_by_edge[k][1])
         best_s, nc, ck, info = triangle_count_by_edge[best_e]
 
-        print('assigning {} to {} produces {} more balanced triangles {}: {}'.format(
-            best_s, best_e, nc, ck, info
+        if edge2true_sign:
+            prefix = ("\u2713" if best_s == edge2true_sign[best_e]
+                      else "\u2717")
+        else:
+            prefix = ""
+        print('{} assigning {} to {} produces {} more balanced triangles {}: {}'.format(
+            prefix, best_s, best_e, nc, ck, info,
+            
         ))
 
         # update triangle information on affected edges
