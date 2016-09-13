@@ -19,7 +19,7 @@ def test_agglomerative_1(cc_g1):
 
 def test_agglomerative_2(cc_g2):
     C = agglomerative(cc_g2, **kwargs)
-    assert adjusted_rand_score(C, np.zeros(3)) == 1.0
+    assert adjusted_rand_score(C, [0, 0, 1]) == 1.0
 
 
 def test_agglomerative_3(cc_g3):
@@ -68,4 +68,3 @@ def test_sampling_wrapper_2(scc_g3):
     C = sampling_wrapper(scc_g3, agglomerative, samples=list(range(4)),
                          return_dict=False)
     assert adjusted_rand_score(C, np.array([0]*6 + [1, 2]))
-    

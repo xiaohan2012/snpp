@@ -133,7 +133,7 @@ def parse_wiki_rfa(path):
     DAT:23:13, 19 April 2013
     TXT:'''Support''' as co-nom.
     """
-    sign_strs = {'-1', '1'}
+    sign_strs = {'-1', '1', '0'}
     with open(path, 'r') as f:
         rows = []
         row = {}
