@@ -1,4 +1,3 @@
-
 import findspark  # this needs to be the first import
 findspark.init()
 
@@ -192,3 +191,67 @@ def A6():
 @pytest.fixture
 def g6():
     return matrix2graph(A6(), None, multigraph=False)
+
+
+
+## correlation clustering fixtures
+
+
+@pytest.fixture
+def cc_g1():
+    g = nx.Graph()
+    g.add_edges_from([
+        (0, 1, {'sign': 1}),
+        (2, 3, {'sign': 1}),
+        (4, 5, {'sign': 1}),
+        (1, 2, {'sign': -1}),
+        (3, 4, {'sign': -1}),
+    ])
+    return g
+
+
+@pytest.fixture
+def cc_g2():
+    g = nx.Graph()
+    g.add_edges_from([
+        (0, 1, {'sign': 1}),
+        (0, 2, {'sign': 1}),
+        (1, 2, {'sign': -1}),
+    ])
+    return g
+
+
+@pytest.fixture
+def cc_g3():
+    g = nx.Graph()
+    g.add_edges_from([
+        (0, 1, {'sign': 1}),
+        (0, 2, {'sign': 1}),
+        (1, 2, {'sign': -1}),
+        (1, 3, {'sign': 1}),
+        (2, 3, {'sign': 1}),
+    ])
+    return g
+
+
+@pytest.fixture
+def scc_g1():
+    g = cc_g1()
+    g.add_edges_from([
+        (3, 6, {'sign': 1}),
+        (4, 7, {'sign': 1}),
+        (0, 8, {'sign': -1})
+    ])
+    return g
+
+
+@pytest.fixture
+def scc_g3():
+    g = cc_g3()
+    g.add_edges_from([
+        (1, 4, {'sign': 1}),
+        (3, 5, {'sign': 1}),
+        (2, 6, {'sign': -1}),
+        (0, 7, {'sign': -1})
+    ])
+    return g
