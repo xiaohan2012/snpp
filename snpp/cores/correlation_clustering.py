@@ -15,11 +15,13 @@ def change_sign_to_distance(g, mapping={-1: 1, 1: -1}):
         g[i][j]['weight'] = mapping[g[i][j]['sign']]
     return g
 
-@profile
-def agglomerative(g, return_dict=True, change_sign=False):
+
+def agglomerative(g, threshold=0.0, return_dict=True, change_sign=False):
     """
     return_dict: return dict if True, otherwise return label array
     """
+    assert isinstance(g, nx.Graph)
+    
     if g.number_of_nodes() == 0:
         raise ValueError('empty graph')
 
@@ -43,9 +45,12 @@ def agglomerative(g, return_dict=True, change_sign=False):
             cross_edges = [(n1, n2)
                            for n1, n2 in product(clus[c1], clus[c2])
                            if n1 in g.adj and n2 in g.adj[n1]]
+
             if cross_edges:
-                clus_dist_cache.add_edge(c1, c2,
-                                         weight=sum(g[n1][n2]['weight'] for n1, n2 in cross_edges))
+                clus_dist_cache.add_edge(
+                    c1, c2,
+                    weight=sum(g[n1][n2]['weight'] for n1, n2 in cross_edges) / len(cross_edges))
+
         if clus_dist_cache.number_of_edges() > 0:  # might got clusters to merge
             new_clus = {}
             # getting cluster pair with mimimum dist_sum
@@ -53,7 +58,7 @@ def agglomerative(g, return_dict=True, change_sign=False):
                                 key=lambda e: clus_dist_cache[e[0]][e[1]]['weight'])
             min_dist_sum = clus_dist_cache[min_dist_pair[0]][min_dist_pair[1]]['weight']
 
-            if min_dist_sum < 0.0:  # merge
+            if min_dist_sum < threshold:  # merge
                 (c1, c2) = min_dist_pair
                 if DEBUG:
                     print('merging {} and {}'.format(c1, c2))
@@ -78,21 +83,31 @@ def agglomerative(g, return_dict=True, change_sign=False):
                 print('didn\'t find mergable cluster pair')
             break
 
+    assert g.number_of_nodes() == sum(map(len, clus.values()))
     if return_dict:
-        return clus
+        return renumber_clus_dict(clus)
     else:
         return clus_dict_to_array(g, clus)
 
 
+def renumber_clus_dict(clus):
+    new_clus = {}
+    for i, (_, ns) in enumerate(clus.items()):
+        new_clus[i] = ns
+    return new_clus
+
+
 def clus_dict_to_array(g, clus):
     labels = np.zeros(g.number_of_nodes())
-    for c, nodes in clus.items():
+    for i, (_, nodes) in enumerate(clus.items()):
         for n in nodes:
-            labels[n] = c
+            labels[n] = i
     return labels
     
     
 def sampling_wrapper(g, cluster_func, sample_size=None, samples=None, return_dict=True, **kwargs):
+    assert isinstance(g, nx.Graph)
+    
     g = change_sign_to_distance(g.copy())
 
     # take samples
@@ -101,6 +116,7 @@ def sampling_wrapper(g, cluster_func, sample_size=None, samples=None, return_dic
         samples = random.sample(g.nodes(), sample_size)
     else:
         sample_size = len(samples)
+    
     remaining_nodes = set(g.nodes()) - set(samples)
 
     # if DEBUG:
@@ -109,21 +125,25 @@ def sampling_wrapper(g, cluster_func, sample_size=None, samples=None, return_dic
     # partition the samples using `cluster_func`
     C = cluster_func(g.subgraph(samples), return_dict=True, change_sign=False,
                      **kwargs)
+    C[-1] = set()
+    
+    assert sum(map(len, C.values())) == sample_size
 
     # if DEBUG:
-    print('partition on the samples')
-    print(C)
+    print('partition on the samples produces {} clusters'.format(len(C)))
 
     print("remainign nodes to assign clusters {}".format(len(remaining_nodes)))
 
     # assign remaining nodes to the clusters independently
-    remain_nodes_clus = {}
+        
     for n in tqdm(remaining_nodes):
         # if DEBUG:
         #     print('considering n {}'.format(n))
         cost_by_clus = {}
         connectable_to = {}
         for c, cnodes in C.items():
+            if c == -1:
+                continue
             cost_by_clus[c] = sum(g[n][cn]['weight']
                                   for cn in cnodes
                                   if g.has_edge(n, cn))
@@ -137,43 +157,52 @@ def sampling_wrapper(g, cluster_func, sample_size=None, samples=None, return_dic
         min_cost = - total_cost_by_clus  # singleton case
         cand_clus = -1
         
-        # if DEBUG:
-        #     print('min_cost {}'.format(min_cost))
+        if DEBUG:
+            print('min_cost {}'.format(min_cost))
         
         for c, cnodes in C.items():
+            if c == -1:
+                continue
+
             if connectable_to[c]:
                 cost = (2 * cost_by_clus[c] - total_cost_by_clus)
-                # if DEBUG:
-                #     print('c {}'.format(c))
-                #     print('cost {}'.format(cost))
+                if DEBUG:
+                    print('c {}'.format(c))
+                    print('cost {}'.format(cost))
                 if cost < min_cost:
                     min_cost = cost
                     cand_clus = c
+
         if DEBUG:
             print('assinging {} to {}'.format(n, cand_clus))
-        remain_nodes_clus[n] = cand_clus
+            print('with {}'.format(C[cand_clus]))
+        C[cand_clus].add(n)
+
+        # remain_nodes_clus[n] = cand_clus
 
     # print('remainig node clusters')
     # print(remain_nodes_clus)
 
-    for n, c in remain_nodes_clus.items():
-        if c != -1:
-            C[c].add(n)
+    # for n, c in remain_nodes_clus.items():
+    #     if c != -1:
+    #         C[c].add(n)
 
-    singleton_nodes = list(filter(lambda n: remain_nodes_clus[n] == -1,
-                                  remain_nodes_clus))
-
+    # singleton_nodes = list(filter(lambda n: remain_nodes_clus[n] == -1,
+    #                               remain_nodes_clus))
+    singleton_nodes = C[-1]
+        
     print('singleton_nodes ({})'.format(len(singleton_nodes)))
     # print(singleton_nodes)
 
     if singleton_nodes:
         C1 = cluster_func(g.subgraph(singleton_nodes), return_dict=True, **kwargs)
-
+        print(C1)
+        del C[-1]
         # renumbering
         for c, nodes in C1.items():
             C[len(C) + c] = nodes
 
     if return_dict:
-        return C
+        return renumber_clus_dict(C)
     else:
         return clus_dict_to_array(g, C)
