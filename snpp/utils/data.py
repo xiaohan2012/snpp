@@ -2,7 +2,7 @@ import random
 import pandas as pd
 import numpy as np
 import networkx as nx
-
+from tqdm import tqdm
 from scipy.sparse import dok_matrix
 
 from snpp.utils.matrix import load_sparse_csr, \
@@ -121,3 +121,51 @@ def make_signed_matrix(N, friends, enemies):
         Q[i, i] = 1
         
     return Q
+
+
+def parse_wiki_rfa(path):
+    """
+    SRC:Steel1943
+    TGT:BDD
+    VOT:1
+    RES:1
+    YEA:2013
+    DAT:23:13, 19 April 2013
+    TXT:'''Support''' as co-nom.
+    """
+    sign_strs = {'-1', '1'}
+    with open(path, 'r') as f:
+        rows = []
+        row = {}
+        for l in tqdm(f):
+            l = l.strip()
+            if l:
+                key, val = l.split(':', 1)
+                if val in sign_strs:
+                    val = int(val)
+                row[key] = val
+            else:
+                if len(row) == 7:
+                    rows.append(row)
+                    row = {}
+        return pd.DataFrame.from_records(rows)
+
+
+def write_wiki_rfa2sp_matrix(df, output_path):
+    """
+    write from parsed dataframe to sparse matrix
+    """
+    edges = []
+    node_names = set(df['SRC'].unique()) | set(df['TGT'].unique())
+    name2id = {n: i for i, n in enumerate(node_names)}
+    for _, r in tqdm(df.iterrows()):
+        src, tgt, sign = name2id[r['SRC']], name2id[r['TGT']], r['VOT']
+        edges.append((src, tgt, sign))
+    csv_df = pd.DataFrame(edges, columns=('FromNodeId', 'ToNodeId', 'Sign'))
+    csv_df.to_csv(output_path+'.csv', sep='\t')
+    
+    m = load_csv_as_sparse(output_path+'.csv')
+    
+    save_sparse_csr(output_path, m)
+    
+    

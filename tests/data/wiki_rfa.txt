@@ -1,0 +1,16 @@
+SRC:Pakaran
+TGT:WhisperToMe
+VOT:1
+RES:1
+YEA:2003
+DAT:05:38, 5 Dec 2003
+TXT:Support.  Age has nothing to do with maturity.  -- 
+
+SRC:Jimregan
+TGT:Zanimum
+VOT:-1
+RES:1
+YEA:2003
+DAT:
+TXT:Support - anyone who can write so much, and so well, about [[Sesame Street]] deserves help^Wsupport! -- 
+

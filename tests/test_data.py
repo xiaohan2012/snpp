@@ -3,7 +3,8 @@ import contexts as ctx
 import numpy as np
 from snpp.utils.data import load_csv_network, \
     example_for_intuition, \
-    load_csv_as_sparse
+    load_csv_as_sparse, \
+    parse_wiki_rfa
 
 
 def test_load_csv_network():
@@ -29,3 +30,15 @@ def test_synthetic_data():
     assert N * (N - 1) / 2 * p == (nnz - N) / 2
     assert (Q == np.transpose(Q)).all()
 
+
+def test_parse_wiki_rfa():
+    df = parse_wiki_rfa('data/wiki_rfa.txt')
+    assert df.shape == (2, 7)
+
+    assert df.iloc[0]['SRC'] == 'Pakaran'
+    assert df.iloc[0]['TGT'] == 'WhisperToMe'
+    assert df.iloc[0]['VOT'] == 1
+
+    assert df.iloc[1]['SRC'] == 'Jimregan'
+    assert df.iloc[1]['TGT'] == 'Zanimum'
+    assert df.iloc[1]['VOT'] == -1

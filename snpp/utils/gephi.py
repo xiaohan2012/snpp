@@ -2,7 +2,7 @@ import networkx as nx
 from matrix import load_sparse_csr, indexed_entries
 
 
-dataset = 'epinions'
+dataset = 'wiki'
 
 
 def main():
